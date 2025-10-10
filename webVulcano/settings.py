@@ -17,8 +17,12 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-produc
 # SECURITY WARNING: No ejecutar con debug=True en producción
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# Hosts permitidos - soporte para Railway
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+# Hosts permitidos (compatibles con Render)
+ALLOWED_HOSTS = list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv()))
+
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # CSRF trusted origins para Railway
 CSRF_TRUSTED_ORIGINS = config(
@@ -81,7 +85,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'webVulcano.wsgi.application'
 
 # ============================================================================
-# CONFIGURACIÓN DE BASE DE DATOS - Compatible con Railway PostgreSQL
+# CONFIGURACIÓN DE BASE DE DATOS - Compatible con Render PostgreSQL
 # ============================================================================
 DATABASES = {
     'default': dj_database_url.config(
