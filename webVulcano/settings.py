@@ -5,8 +5,8 @@ Plataforma de gestión y visualización de proyectos arquitectónicos.
 
 import os
 from pathlib import Path
-from decouple import config
-from dotenv import load_dotenv
+from decouple import config, Csv
+import dj_database_url
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,9 +15,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production-vulcano-2025')
 
 # SECURITY WARNING: No ejecutar con debug=True en producción
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+# Hosts permitidos - soporte para Railway
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+
+# CSRF trusted origins para Railway
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://localhost:8000',
+    cast=Csv()
+)
 
 # Definición de aplicaciones instaladas
 INSTALLED_APPS = [
@@ -27,8 +35,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Cloudinary - DEBE IR ANTES de las apps locales
+    'cloudinary_storage',
+    'cloudinary',
+    
     # Apps locales
     'vulcano',
+    
     # Apps de terceros
     'django_cleanup.apps.CleanupConfig',  # Limpieza automática de archivos huérfanos
 ]
@@ -66,26 +80,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'webVulcano.wsgi.application'
 
-# Configuración de Base de Datos Oracle
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.oracle',
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASS'),
-#     }
-# }
-
-# Configuración de Base de Datos PostgreSQL
+# ============================================================================
+# CONFIGURACIÓN DE BASE DE DATOS - Compatible con Railway PostgreSQL
+# ============================================================================
 DATABASES = {
-    'default': {
-        'ENGINE': config('DB_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASS'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-    }
+    'default': dj_database_url.config(
+        default=config(
+            'DATABASE_URL',
+            default=f"postgresql://{config('DB_USER', default='vulcano')}:"
+                    f"{config('DB_PASS', default='0p3r4c10n3s')}@"
+                    f"{config('DB_HOST', default='localhost')}:"
+                    f"{config('DB_PORT', default='5432')}/"
+                    f"{config('DB_NAME', default='vulcano')}"
+        ),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # Validación de contraseñas
@@ -113,19 +123,43 @@ TIME_ZONE = 'America/Mexico_City'
 USE_I18N = True
 USE_TZ = True
 
-# Configuración de archivos estáticos (CSS, JavaScript, Imágenes)
+# ============================================================================
+# CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS - WhiteNoise
+# ============================================================================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'vulcano' / 'static',
 ]
 
-# Configuración de archivos multimedia (uploads de usuarios)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
 # Configuración de WhiteNoise para servir archivos estáticos
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# ============================================================================
+# CONFIGURACIÓN DE CLOUDINARY PARA ARCHIVOS MULTIMEDIA
+# ============================================================================
+CLOUDINARY_URL = config('CLOUDINARY_URL', default='')
+
+if CLOUDINARY_URL:
+    # Usar Cloudinary en producción
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    
+    # Configuración de Cloudinary
+    cloudinary.config(
+        cloudinary_url=CLOUDINARY_URL
+    )
+    
+    # Storage backend para archivos media
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    
+    MEDIA_URL = '/media/'
+    
+else:
+    # Fallback para desarrollo local
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # Tipo de campo de clave primaria predeterminado
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -149,65 +183,104 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-# Configuración de logging con rotación
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+# ============================================================================
+# CONFIGURACIÓN DE LOGGING
+# ============================================================================
+# En producción (Railway), los logs se manejan por stdout/stderr
+if DEBUG:
+    # Crear directorio de logs solo en desarrollo
+    os.makedirs(BASE_DIR / 'logs', exist_ok=True)
+    
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {asctime} {message}',
+                'style': '{',
+            },
         },
-        'simple': {
-            'format': '{levelname} {asctime} {message}',
-            'style': '{',
+        'handlers': {
+            'file': {
+                'level': 'INFO',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': BASE_DIR / 'logs' / 'vulcano.log',
+                'maxBytes': 1024 * 1024 * 10,  # 10 MB
+                'backupCount': 5,
+                'formatter': 'verbose',
+            },
+            'error_file': {
+                'level': 'ERROR',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': BASE_DIR / 'logs' / 'vulcano_errors.log',
+                'maxBytes': 1024 * 1024 * 10,  # 10 MB
+                'backupCount': 5,
+                'formatter': 'verbose',
+            },
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
         },
-    },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'vulcano.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'vulcano_errors.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10 MB
-            'backupCount': 5,
-            'formatter': 'verbose',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-    },
-    'root': {
-        'handlers': ['console', 'file', 'error_file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
+        'root': {
             'handlers': ['console', 'file', 'error_file'],
             'level': 'INFO',
-            'propagate': False,
         },
-        'vulcano': {
-            'handlers': ['console', 'file', 'error_file'],
-            'level': 'DEBUG',
-            'propagate': False,
+        'loggers': {
+            'django': {
+                'handlers': ['console', 'file', 'error_file'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'vulcano': {
+                'handlers': ['console', 'file', 'error_file'],
+                'level': 'DEBUG',
+                'propagate': False,
+            },
         },
-    },
-}
+    }
+else:
+    # En producción, logs simplificados a consola
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '{levelname} {asctime} {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'vulcano': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+        },
+    }
 
-# Crear directorio de logs si no existe
-os.makedirs(BASE_DIR / 'logs', exist_ok=True)
-
-# Configuración de caché (desarrollo con caché local)
+# Configuración de caché
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -219,7 +292,9 @@ CACHES = {
     }
 }
 
-# Configuración de seguridad para producción
+# ============================================================================
+# CONFIGURACIÓN DE SEGURIDAD PARA PRODUCCIÓN
+# ============================================================================
 if not DEBUG:
     # HSTS (HTTP Strict Transport Security)
     SECURE_HSTS_SECONDS = 31536000  # 1 año
@@ -246,8 +321,13 @@ if not DEBUG:
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
 
-# Configuración de email (opcional para notificaciones futuras)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# ============================================================================
+# CONFIGURACIÓN DE EMAIL
+# ============================================================================
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend'  # Console en desarrollo
+)
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
