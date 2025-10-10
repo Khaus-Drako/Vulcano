@@ -4,10 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-venv/
-.venv/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -29,35 +25,31 @@ wheels/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
-staticfiles/
+/media
+/staticfiles
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.production
+.venv
+venv/
+ENV/
+env/
 
-# IDE
+# Logs
+logs/
+*.log
+
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.DS_Store
 
 # OS
-.DS_Store
 Thumbs.db
 
-# Oracle Wallet (si usas)
-wallet/
-
-# Test coverage
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
-
-# Migrations (opcional, depende de tu flujo)
-# */migrations/*.py
-# !*/migrations/__init__.py
+# Backup
+*.bak

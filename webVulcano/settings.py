@@ -1,6 +1,7 @@
 """
 Configuración principal de Django para el proyecto Vulcano.
 Plataforma de gestión y visualización de proyectos arquitectónicos.
+Optimizado para despliegue en Render.com
 """
 
 import os
@@ -8,30 +9,33 @@ from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
 
-# Directorio base del proyecto
+# ============================================================================
+# CONFIGURACIÓN BASE
+# ============================================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: Mantener la clave secreta en producción
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production-vulcano-2025')
 
-# SECURITY WARNING: No ejecutar con debug=True en producción
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-# Hosts permitidos (compatibles con Render)
-ALLOWED_HOSTS = list(config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv()))
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
+# Detectar si estamos en Render
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    print(f"✅ Render hostname added: {RENDER_EXTERNAL_HOSTNAME}")
 
-# CSRF trusted origins para Railway
+# CSRF Configuration
 CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
     default='http://localhost:8000',
     cast=Csv()
 )
 
-# Definición de aplicaciones instaladas
+# ============================================================================
+# APLICACIONES INSTALADAS
+# ============================================================================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Cloudinary - DEBE IR ANTES de las apps locales
+    # Cloudinary (DEBE ir ANTES de las apps locales)
     'cloudinary_storage',
     'cloudinary',
     
@@ -48,23 +52,29 @@ INSTALLED_APPS = [
     'vulcano',
     
     # Apps de terceros
-    'django_cleanup.apps.CleanupConfig',  # Limpieza automática de archivos huérfanos
+    'django_cleanup.apps.CleanupConfig',
 ]
 
+# ============================================================================
+# MIDDLEWARE
+# ============================================================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Servir archivos estáticos eficientemente
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'vulcano.middleware.TestModeMiddleware',  # Agrega test_mode a las peticiones
+    'vulcano.middleware.TestModeMiddleware',
 ]
 
 ROOT_URLCONF = 'webVulcano.urls'
 
+# ============================================================================
+# TEMPLATES
+# ============================================================================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -85,24 +95,38 @@ TEMPLATES = [
 WSGI_APPLICATION = 'webVulcano.wsgi.application'
 
 # ============================================================================
-# CONFIGURACIÓN DE BASE DE DATOS - Compatible con Render PostgreSQL
+# BASE DE DATOS - Optimizado para Render PostgreSQL
 # ============================================================================
-DATABASES = {
-    'default': dj_database_url.config(
-        default=config(
-            'DATABASE_URL',
-            default=f"postgresql://{config('DB_USER', default='vulcano')}:"
-                    f"{config('DB_PASS', default='0p3r4c10n3s')}@"
-                    f"{config('DB_HOST', default='localhost')}:"
-                    f"{config('DB_PORT', default='5432')}/"
-                    f"{config('DB_NAME', default='vulcano')}"
-        ),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
+database_url = os.environ.get('DATABASE_URL')
 
-# Validación de contraseñas
+if database_url:
+    # En producción (Render) usar DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True,
+        )
+    }
+    print("✅ Using Render PostgreSQL database")
+else:
+    # En desarrollo local
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DB_ENGINE', default='django.db.backends.postgresql'),
+            'NAME': config('DB_NAME', default='vulcano'),
+            'USER': config('DB_USER', default='vulcano'),
+            'PASSWORD': config('DB_PASS', default='0p3r4c10n3s'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
+    print("✅ Using local PostgreSQL database")
+
+# ============================================================================
+# VALIDACIÓN DE CONTRASEÑAS
+# ============================================================================
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -121,63 +145,74 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internacionalización
+# ============================================================================
+# INTERNACIONALIZACIÓN
+# ============================================================================
 LANGUAGE_CODE = 'es-es'
 TIME_ZONE = 'America/Mexico_City'
 USE_I18N = True
 USE_TZ = True
 
 # ============================================================================
-# CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS - WhiteNoise
+# ARCHIVOS ESTÁTICOS - WhiteNoise
 # ============================================================================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / 'vulcano' / 'static',
-]
 
-# Configuración de WhiteNoise para servir archivos estáticos
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Solo incluir STATICFILES_DIRS en desarrollo
+if DEBUG:
+    STATICFILES_DIRS = [
+        BASE_DIR / 'vulcano' / 'static',
+    ]
+
+# WhiteNoise configuration
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # ============================================================================
-# CONFIGURACIÓN DE CLOUDINARY PARA ARCHIVOS MULTIMEDIA
+# CLOUDINARY - Archivos Media
 # ============================================================================
 CLOUDINARY_URL = config('CLOUDINARY_URL', default='')
 
 if CLOUDINARY_URL:
-    # Usar Cloudinary en producción
     import cloudinary
     import cloudinary.uploader
     import cloudinary.api
     
-    # Configuración de Cloudinary
-    cloudinary.config(
-        cloudinary_url=CLOUDINARY_URL
-    )
+    # Configurar Cloudinary
+    cloudinary.config(cloudinary_url=CLOUDINARY_URL)
     
-    # Storage backend para archivos media
+    # Storage backend
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     
     MEDIA_URL = '/media/'
     
+    print("✅ Cloudinary configured successfully")
 else:
-    # Fallback para desarrollo local
+    # Fallback local
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+    print("⚠️  Using local media storage")
 
-# Tipo de campo de clave primaria predeterminado
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Configuración de autenticación
+# ============================================================================
+# CONFIGURACIÓN DE AUTENTICACIÓN
+# ============================================================================
 LOGIN_URL = 'vulcano:login'
 LOGIN_REDIRECT_URL = 'vulcano:dashboard'
 LOGOUT_REDIRECT_URL = 'vulcano:home'
 
-# Configuración de sesiones
 SESSION_COOKIE_AGE = 86400  # 24 horas
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Configuración de mensajes
+# ============================================================================
+# MENSAJES
+# ============================================================================
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',
@@ -188,11 +223,10 @@ MESSAGE_TAGS = {
 }
 
 # ============================================================================
-# CONFIGURACIÓN DE LOGGING
+# LOGGING
 # ============================================================================
-# En producción (Railway), los logs se manejan por stdout/stderr
 if DEBUG:
-    # Crear directorio de logs solo en desarrollo
+    # Logs detallados en desarrollo
     os.makedirs(BASE_DIR / 'logs', exist_ok=True)
     
     LOGGING = {
@@ -200,11 +234,7 @@ if DEBUG:
         'disable_existing_loggers': False,
         'formatters': {
             'verbose': {
-                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-                'style': '{',
-            },
-            'simple': {
-                'format': '{levelname} {asctime} {message}',
+                'format': '{levelname} {asctime} {module} {message}',
                 'style': '{',
             },
         },
@@ -213,43 +243,23 @@ if DEBUG:
                 'level': 'INFO',
                 'class': 'logging.handlers.RotatingFileHandler',
                 'filename': BASE_DIR / 'logs' / 'vulcano.log',
-                'maxBytes': 1024 * 1024 * 10,  # 10 MB
-                'backupCount': 5,
-                'formatter': 'verbose',
-            },
-            'error_file': {
-                'level': 'ERROR',
-                'class': 'logging.handlers.RotatingFileHandler',
-                'filename': BASE_DIR / 'logs' / 'vulcano_errors.log',
-                'maxBytes': 1024 * 1024 * 10,  # 10 MB
+                'maxBytes': 1024 * 1024 * 10,
                 'backupCount': 5,
                 'formatter': 'verbose',
             },
             'console': {
                 'level': 'DEBUG',
                 'class': 'logging.StreamHandler',
-                'formatter': 'simple',
+                'formatter': 'verbose',
             },
         },
         'root': {
-            'handlers': ['console', 'file', 'error_file'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
-        },
-        'loggers': {
-            'django': {
-                'handlers': ['console', 'file', 'error_file'],
-                'level': 'INFO',
-                'propagate': False,
-            },
-            'vulcano': {
-                'handlers': ['console', 'file', 'error_file'],
-                'level': 'DEBUG',
-                'propagate': False,
-            },
         },
     }
 else:
-    # En producción, logs simplificados a consola
+    # Logs simples en producción
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
@@ -270,26 +280,16 @@ else:
             'handlers': ['console'],
             'level': 'INFO',
         },
-        'loggers': {
-            'django': {
-                'handlers': ['console'],
-                'level': 'INFO',
-                'propagate': False,
-            },
-            'vulcano': {
-                'handlers': ['console'],
-                'level': 'INFO',
-                'propagate': False,
-            },
-        },
     }
 
-# Configuración de caché
+# ============================================================================
+# CACHÉ
+# ============================================================================
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'vulcano-cache',
-        'TIMEOUT': 300,  # 5 minutos
+        'TIMEOUT': 300,
         'OPTIONS': {
             'MAX_ENTRIES': 1000
         }
@@ -297,40 +297,45 @@ CACHES = {
 }
 
 # ============================================================================
-# CONFIGURACIÓN DE SEGURIDAD PARA PRODUCCIÓN
+# SEGURIDAD - Solo en Producción
 # ============================================================================
 if not DEBUG:
-    # HSTS (HTTP Strict Transport Security)
-    SECURE_HSTS_SECONDS = 31536000  # 1 año
+    # HTTPS/SSL
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
+    # HSTS
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     
-    # SSL/HTTPS
-    SECURE_SSL_REDIRECT = True
+    # Cookies
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    
-    # Prevención de XSS y otros ataques
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
-    
-    # Ajustes de cookies
     SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_HTTPONLY = True
     CSRF_COOKIE_SAMESITE = 'Strict'
     SESSION_COOKIE_SAMESITE = 'Strict'
+    
+    # XSS Protection
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    
+    print("✅ Production security settings enabled")
 
-# Configuración de subida de archivos
+# ============================================================================
+# SUBIDA DE ARCHIVOS
+# ============================================================================
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
 
 # ============================================================================
-# CONFIGURACIÓN DE EMAIL
+# EMAIL (Opcional)
 # ============================================================================
 EMAIL_BACKEND = config(
     'EMAIL_BACKEND',
-    default='django.core.mail.backends.console.EmailBackend'  # Console en desarrollo
+    default='django.core.mail.backends.console.EmailBackend'
 )
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
@@ -338,3 +343,20 @@ EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vulcano.com')
+
+# ============================================================================
+# DJANGO SETTINGS
+# ============================================================================
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================================================
+# INFORMACIÓN DE CONFIGURACIÓN
+# ============================================================================
+print("=" * 50)
+print("🌋 Vulcano Configuration Loaded")
+print("=" * 50)
+print(f"DEBUG: {DEBUG}")
+print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+print(f"DATABASE: {'Render PostgreSQL' if database_url else 'Local PostgreSQL'}")
+print(f"CLOUDINARY: {'✅ Configured' if CLOUDINARY_URL else '❌ Not configured'}")
+print("=" * 50)
