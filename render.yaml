@@ -7,7 +7,7 @@ databases:
 
 services:
   - type: web
-    name: vulcano-web
+    name: ihman
     runtime: python
     plan: free
     branch: main
