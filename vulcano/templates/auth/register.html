@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registro - Vulcano{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-container" style="max-width: 600px;">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">Vulcano</div>
+                <h1 class="auth-title">Crea tu cuenta</h1>
+                <p class="auth-subtitle">Únete a la comunidad de arquitectura más grande</p>
+            </div>
+            
+            {% if form.non_field_errors %}
+            <div class="auth-alert auth-alert-error">
+                <i class="bi bi-exclamation-circle"></i>
+                <div>
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <form method="post" class="auth-form" data-validate="true" novalidate>
+                {% csrf_token %}
+                
+                <!-- Rol -->
+                <div class="form-group-auth">
+                    <label class="form-label-auth">
+                        ¿Cómo deseas usar Vulcano? <span class="form-label-required">*</span>
+                    </label>
+                    <div class="role-selector">
+                        <div class="role-option">
+                            <input type="radio" 
+                                   name="{{ form.role.name }}" 
+                                   value="arquitecto" 
+                                   id="role-arquitecto" 
+                                   class="role-input"
+                                   {% if form.role.value == 'arquitecto' %}checked{% endif %}
+                                   required>
+                            <label for="role-arquitecto" class="role-label">
+                                <div class="role-icon">🏗️</div>
+                                <div class="role-name">Arquitecto</div>
+                                <div class="role-description">Publicar y gestionar proyectos</div>
+                            </label>
+                        </div>
+                        
+                        <div class="role-option">
+                            <input type="radio" 
+                                   name="{{ form.role.name }}" 
+                                   value="cliente" 
+                                   id="role-cliente" 
+                                   class="role-input"
+                                   {% if form.role.value == 'cliente' or not form.role.value %}checked{% endif %}
+                                   required>
+                            <label for="role-cliente" class="role-label">
+                                <div class="role-icon">👤</div>
+                                <div class="role-name">Cliente</div>
+                                <div class="role-description">Explorar proyectos y conectar</div>
+                            </label>
+                        </div>
+                    </div>
+                    {% if form.role.errors %}
+                    <div class="form-error mt-2">
+                        <i class="bi bi-exclamation-circle"></i>
+                        {{ form.role.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Username -->
+                <div class="form-group-auth">
+                    <label for="{{ form.username.id_for_label }}" class="form-label-auth">
+                        Nombre de usuario <span class="form-label-required">*</span>
+                    </label>
+                    <input type="text" 
+                           name="{{ form.username.name }}" 
+                           id="{{ form.username.id_for_label }}"
+                           class="form-input-auth {% if form.username.errors %}is-invalid{% endif %}"
+                           placeholder="Tu nombre de usuario único"
+                           value="{{ form.username.value|default:'' }}"
+                           required>
+                    <small class="form-help">Solo letras, números y @/./+/-/_</small>
+                    {% if form.username.errors %}
+                    <div class="form-error">
+                        <i class="bi bi-exclamation-circle"></i>
+                        {{ form.username.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Email -->
+                <div class="form-group-auth">
+                    <label for="{{ form.email.id_for_label }}" class="form-label-auth">
+                        Correo electrónico <span class="form-label-required">*</span>
+                    </label>
+                    <input type="email" 
+                           name="{{ form.email.name }}" 
+                           id="{{ form.email.id_for_label }}"
+                           class="form-input-auth {% if form.email.errors %}is-invalid{% endif %}"
+                           placeholder="tu@email.com"
+                           value="{{ form.email.value|default:'' }}"
+                           required>
+                    {% if form.email.errors %}
+                    <div class="form-error">
+                        <i class="bi bi-exclamation-circle"></i>
+                        {{ form.email.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Nombre y Apellido -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group-auth">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label-auth">
+                                Nombre <span class="form-label-required">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="{{ form.first_name.name }}" 
+                                   id="{{ form.first_name.id_for_label }}"
+                                   class="form-input-auth {% if form.first_name.errors %}is-invalid{% endif %}"
+                                   placeholder="Tu nombre"
+                                   value="{{ form.first_name.value|default:'' }}"
+                                   required>
+                            {% if form.first_name.errors %}
+                            <div class="form-error">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {{ form.first_name.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group-auth">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label-auth">
+                                Apellido <span class="form-label-required">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="{{ form.last_name.name }}" 
+                                   id="{{ form.last_name.id_for_label }}"
+                                   class="form-input-auth {% if form.last_name.errors %}is-invalid{% endif %}"
+                                   placeholder="Tu apellido"
+                                   value="{{ form.last_name.value|default:'' }}"
+                                   required>
+                            {% if form.last_name.errors %}
+                            <div class="form-error">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {{ form.last_name.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Teléfono -->
+                <div class="form-group-auth">
+                    <label for="{{ form.phone.id_for_label }}" class="form-label-auth">
+                        Teléfono
+                    </label>
+                    <input type="tel" 
+                           name="{{ form.phone.name }}" 
+                           id="{{ form.phone.id_for_label }}"
+                           class="form-input-auth {% if form.phone.errors %}is-invalid{% endif %}"
+                           placeholder="+52 55 1234 5678"
+                           value="{{ form.phone.value|default:'' }}">
+                    {% if form.phone.errors %}
+                    <div class="form-error">
+                        <i class="bi bi-exclamation-circle"></i>
+                        {{ form.phone.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Empresa -->
+                <div class="form-group-auth">
+                    <label for="{{ form.company.id_for_label }}" class="form-label-auth">
+                        Empresa/Estudio
+                    </label>
+                    <input type="text" 
+                           name="{{ form.company.name }}" 
+                           id="{{ form.company.id_for_label }}"
+                           class="form-input-auth {% if form.company.errors %}is-invalid{% endif %}"
+                           placeholder="Nombre de tu empresa o estudio"
+                           value="{{ form.company.value|default:'' }}">
+                    {% if form.company.errors %}
+                    <div class="form-error">
+                        <i class="bi bi-exclamation-circle"></i>
+                        {{ form.company.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Contraseña -->
+                <div class="form-group-auth">
+                    <label for="{{ form.password1.id_for_label }}" class="form-label-auth">
+                        Contraseña <span class="form-label-required">*</span>
+                    </label>
+                    <div class="password-input-wrapper">
+                        <input type="password" 
+                               name="{{ form.password1.name }}" 
+                               id="{{ form.password1.id_for_label }}"
+                               class="form-input-auth {% if form.password1.errors %}is-invalid{% endif %}"
+                               placeholder="Crea una contraseña segura"
+                               required>
+                        <button type="button" class="password-toggle" tabindex="-1" onclick="togglePassword(this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-help">Mínimo 8 caracteres con letras y números</small>
+                    {% if form.password1.errors %}
+                    <div class="form-error">
+                        <i class="bi bi-exclamation-circle"></i>
+                        {{ form.password1.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Confirmar contraseña -->
+                <div class="form-group-auth">
+                    <label for="{{ form.password2.id_for_label }}" class="form-label-auth">
+                        Confirmar contraseña <span class="form-label-required">*</span>
+                    </label>
+                    <div class="password-input-wrapper">
+                        <input type="password" 
+                               name="{{ form.password2.name }}" 
+                               id="{{ form.password2.id_for_label }}"
+                               class="form-input-auth {% if form.password2.errors %}is-invalid{% endif %}"
+                               placeholder="Confirma tu contraseña"
+                               required>
+                        <button type="button" class="password-toggle" tabindex="-1" onclick="togglePassword(this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password2.errors %}
+                    <div class="form-error">
+                        <i class="bi bi-exclamation-circle"></i>
+                        {{ form.password2.errors.0 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Términos y condiciones -->
+                <div class="form-check-auth">
+                    <input type="checkbox" class="form-check-input-auth" id="terms" required>
+                    <label class="form-check-label-auth" for="terms">
+                        Acepto los <a href="#" class="auth-footer-link">Términos y Condiciones</a> 
+                        y la <a href="#" class="auth-footer-link">Política de Privacidad</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="auth-submit-btn">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Crear Cuenta</span>
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p class="auth-footer-text">
+                    ¿Ya tienes cuenta? 
+                    <a href="{% url 'vulcano:login' %}" class="auth-footer-link">Inicia sesión</a>
+                </p>
+                <p class="auth-footer-text mt-3">
+                    <a href="{% url 'vulcano:home' %}" class="auth-footer-link">
+                        <i class="bi bi-arrow-left me-1"></i> Volver al inicio
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword(button) {
+    const input = button.parentElement.querySelector('input');
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+</script>
+{% endblock %}

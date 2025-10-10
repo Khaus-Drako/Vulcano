@@ -1,0 +1,149 @@
+{% load static %}
+
+<aside class="dashboard-sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <a href="{% url 'vulcano:home' %}" class="text-decoration-none" style="color: var(--color-primary);">
+                IHMAN
+            </a>
+        </div>
+        
+        {% if user.is_authenticated %}
+        <div class="sidebar-user">
+            {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="sidebar-avatar">
+            {% else %}
+            <div class="sidebar-avatar" style="background: var(--color-primary-lighter); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                <i class="bi bi-person-circle" style="font-size: 2rem;"></i>
+            </div>
+            {% endif %}
+            <div class="sidebar-user-info">
+                <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="sidebar-user-role">{{ user.profile.get_role_display }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <nav class="sidebar-nav">
+        <div class="nav-section">
+            <div class="nav-section-title">Principal</div>
+            
+            <div class="nav-item">
+                <a href="{% url 'vulcano:home' %}" class="nav-link-dashboard {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-house-door"></i></span>
+                    <span class="nav-text">Inicio</span>
+                </a>
+            </div>
+            
+            {% if user.is_authenticated %}
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:dashboard' %}" class="nav-link-dashboard {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-grid"></i></span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:inbox' %}" class="nav-link-dashboard {% if request.resolver_match.url_name in 'inbox,message_detail,message_compose' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-envelope"></i></span>
+                        <span class="nav-text">Mensajes</span>
+                        {% if unread_messages_count > 0 %}
+                        <span class="nav-badge">{{ unread_messages_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:profile' %}" class="nav-link-dashboard {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-person"></i></span>
+                        <span class="nav-text">Mi Perfil</span>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if user.is_authenticated %}
+            {% if user.profile.is_arquitecto or user.profile.is_admin %}
+            <div class="nav-section">
+                <div class="nav-section-title">Proyectos</div>
+                
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:project_create' %}" class="nav-link-dashboard {% if request.resolver_match.url_name == 'project_create' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-plus-circle"></i></span>
+                        <span class="nav-text">Nuevo Proyecto</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:home' %}?arquitecto={{ user.id }}" class="nav-link-dashboard">
+                        <span class="nav-icon"><i class="bi bi-folder"></i></span>
+                        <span class="nav-text">Mis Proyectos</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if user.profile.is_admin %}
+            <div class="nav-section">
+                <div class="nav-section-title">Administración</div>
+                
+                <div class="nav-item">
+                    <a href="/admin/" target="_blank" class="nav-link-dashboard">
+                        <span class="nav-icon"><i class="bi bi-gear"></i></span>
+                        <span class="nav-text">Admin Django</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="/admin/auth/user/" target="_blank" class="nav-link-dashboard">
+                        <span class="nav-icon"><i class="bi bi-people"></i></span>
+                        <span class="nav-text">Usuarios</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="nav-section">
+                <div class="nav-section-title">Cuenta</div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link-dashboard">
+                        <span class="nav-icon"><i class="bi bi-gear"></i></span>
+                        <span class="nav-text">Configuración</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link-dashboard">
+                        <span class="nav-icon"><i class="bi bi-question-circle"></i></span>
+                        <span class="nav-text">Ayuda</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:logout' %}" class="nav-link-dashboard" style="color: var(--color-danger);">
+                        <span class="nav-icon"><i class="bi bi-box-arrow-right"></i></span>
+                        <span class="nav-text">Cerrar Sesión</span>
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="nav-section mt-3">
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:login' %}" class="nav-link-dashboard">
+                        <span class="nav-icon"><i class="bi bi-box-arrow-in-right"></i></span>
+                        <span class="nav-text">Iniciar Sesión</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{% url 'vulcano:register' %}" class="nav-link-dashboard">
+                        <span class="nav-icon"><i class="bi bi-person-plus"></i></span>
+                        <span class="nav-text">Registrarse</span>
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </nav>
+</aside>

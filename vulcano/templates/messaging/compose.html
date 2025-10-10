@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nuevo Mensaje - Vulcano{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    
+    <!-- Sidebar -->
+    {% include 'dashboard/partials/_sidebar.html' %}
+    
+    <!-- Main Content -->
+    <div class="dashboard-main">
+        
+        <!-- Toggle Sidebar (móvil) -->
+        <button class="sidebar-toggle">
+            <i class="bi bi-list"></i>
+        </button>
+        
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="bi bi-envelope-plus"></i> Nuevo Mensaje
+            </h1>
+            <p class="dashboard-subtitle">
+                Envía un mensaje a otro usuario
+            </p>
+        </div>
+        
+        <!-- Compose Form -->
+        <div class="dashboard-section" style="max-width: 900px;">
+            <form method="post" data-validate="true" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+                
+                <!-- Destinatario -->
+                <div class="mb-4">
+                    <label for="{{ form.recipient.id_for_label }}" class="form-label">
+                        <i class="bi bi-person me-2"></i> Para <span class="text-danger">*</span>
+                    </label>
+                    <select name="{{ form.recipient.name }}" 
+                            id="{{ form.recipient.id_for_label }}"
+                            class="form-select form-select-lg {% if form.recipient.errors %}is-invalid{% endif %}"
+                            required>
+                        <option value="">Selecciona un destinatario</option>
+                        {% for value, label in form.recipient.field.choices %}
+                        <option value="{{ value }}" {% if form.recipient.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.recipient.errors %}
+                    <div class="invalid-feedback">{{ form.recipient.errors.0 }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Selecciona el usuario que recibirá el mensaje
+                    </small>
+                </div>
+                
+                <!-- Proyecto (opcional) -->
+                {% if form.project %}
+                <div class="mb-4">
+                    <label for="{{ form.project.id_for_label }}" class="form-label">
+                        <i class="bi bi-building me-2"></i> Proyecto (opcional)
+                    </label>
+                    <select name="{{ form.project.name }}" 
+                            id="{{ form.project.id_for_label }}"
+                            class="form-select {% if form.project.errors %}is-invalid{% endif %}">
+                        <option value="">Sin proyecto asociado</option>
+                        {% for value, label in form.project.field.choices %}
+                        <option value="{{ value }}" {% if form.project.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.project.errors %}
+                    <div class="invalid-feedback">{{ form.project.errors.0 }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Asocia este mensaje con un proyecto específico
+                    </small>
+                </div>
+                {% endif %}
+                
+                <!-- Asunto -->
+                <div class="mb-4">
+                    <label for="{{ form.subject.id_for_label }}" class="form-label">
+                        <i class="bi bi-chat-quote me-2"></i> Asunto <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" 
+                           name="{{ form.subject.name }}" 
+                           id="{{ form.subject.id_for_label }}"
+                           class="form-control form-control-lg {% if form.subject.errors %}is-invalid{% endif %}"
+                           value="{{ form.subject.value|default:'' }}"
+                           placeholder="Ej: Consulta sobre diseño de fachada"
+                           required
+                           maxlength="200">
+                    {% if form.subject.errors %}
+                    <div class="invalid-feedback">{{ form.subject.errors.0 }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Un asunto descriptivo ayuda a organizar mejor las conversaciones
+                    </small>
+                </div>
+                
+                <!-- Mensaje -->
+                <div class="mb-4">
+                    <label for="{{ form.body.id_for_label }}" class="form-label">
+                        <i class="bi bi-text-paragraph me-2"></i> Mensaje <span class="text-danger">*</span>
+                    </label>
+                    <textarea name="{{ form.body.name }}" 
+                              id="{{ form.body.id_for_label }}"
+                              class="form-control {% if form.body.errors %}is-invalid{% endif %}"
+                              rows="10"
+                              placeholder="Escribe tu mensaje aquí..."
+                              required
+                              data-autoresize="true">{{ form.body.value|default:'' }}</textarea>
+                    {% if form.body.errors %}
+                    <div class="invalid-feedback">{{ form.body.errors.0 }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Sé claro y específico en tu mensaje
+                    </small>
+                </div>
+                
+                <!-- Tips Box -->
+                <div class="alert alert-info d-flex align-items-start" role="alert">
+                    <i class="bi bi-lightbulb-fill me-3 mt-1 fs-4"></i>
+                    <div>
+                        <strong>Consejos para una buena comunicación:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Sé respetuoso y profesional</li>
+                            <li>Proporciona detalles relevantes sobre tu consulta</li>
+                            <li>Si es sobre un proyecto, menciónalo en el asunto</li>
+                            <li>Revisa tu mensaje antes de enviarlo</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Form Actions -->
+                <div class="d-flex gap-3 justify-content-between align-items-center flex-wrap">
+                    <a href="{% url 'vulcano:inbox' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i> Cancelar
+                    </a>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-lg" onclick="saveDraft()">
+                            <i class="bi bi-save me-2"></i> Guardar Borrador
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-send me-2"></i> Enviar Mensaje
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Recipient Info (si hay destinatario seleccionado) -->
+        <div class="dashboard-section mt-4" id="recipientInfo" style="max-width: 900px; display: none;">
+            <h5 class="mb-3">
+                <i class="bi bi-info-circle me-2"></i> Información del Destinatario
+            </h5>
+            <div id="recipientDetails"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostrar información del destinatario al seleccionarlo
+document.getElementById('{{ form.recipient.id_for_label }}')?.addEventListener('change', function() {
+    const recipientId = this.value;
+    const recipientInfo = document.getElementById('recipientInfo');
+    const recipientDetails = document.getElementById('recipientDetails');
+    
+    if (recipientId) {
+        // Aquí podrías hacer una petición AJAX para obtener más detalles del usuario
+        // Por ahora solo mostramos el nombre seleccionado
+        const selectedText = this.options[this.selectedIndex].text;
+        recipientDetails.innerHTML = `
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                     style="width: 50px; height: 50px;">
+                    <i class="bi bi-person fs-4"></i>
+                </div>
+                <div>
+                    <strong class="d-block">${selectedText}</strong>
+                    <small class="text-muted">Usuario de Vulcano</small>
+                </div>
+            </div>
+        `;
+        recipientInfo.style.display = 'block';
+    } else {
+        recipientInfo.style.display = 'none';
+    }
+});
+
+// Trigger para mostrar info si ya viene pre-seleccionado
+window.addEventListener('load', function() {
+    const recipientSelect = document.getElementById('{{ form.recipient.id_for_label }}');
+    if (recipientSelect && recipientSelect.value) {
+        recipientSelect.dispatchEvent(new Event('change'));
+    }
+});
+
+// Guardar borrador (placeholder - implementar según necesidades)
+function saveDraft() {
+    const formData = new FormData(document.querySelector('form'));
+    
+    // Aquí implementarías la lógica para guardar en localStorage o hacer una petición AJAX
+    localStorage.setItem('message_draft', JSON.stringify({
+        recipient: formData.get('recipient'),
+        project: formData.get('project'),
+        subject: formData.get('subject'),
+        body: formData.get('body'),
+        saved_at: new Date().toISOString()
+    }));
+    
+    VulcanoApp.showToast('Borrador guardado localmente', 'success');
+}
+
+// Cargar borrador al cargar la página
+window.addEventListener('load', function() {
+    const draft = localStorage.getItem('message_draft');
+    if (draft && confirm('Se encontró un borrador guardado. ¿Deseas cargarlo?')) {
+        const data = JSON.parse(draft);
+        
+        document.getElementById('{{ form.recipient.id_for_label }}').value = data.recipient || '';
+        if (document.getElementById('{{ form.project.id_for_label }}')) {
+            document.getElementById('{{ form.project.id_for_label }}').value = data.project || '';
+        }
+        document.getElementById('{{ form.subject.id_for_label }}').value = data.subject || '';
+        document.getElementById('{{ form.body.id_for_label }}').value = data.body || '';
+        
+        VulcanoApp.showToast('Borrador cargado', 'info');
+    }
+});
+
+// Limpiar borrador al enviar exitosamente
+document.querySelector('form').addEventListener('submit', function() {
+    localStorage.removeItem('message_draft');
+});
+
+// Auto-resize textarea
+const textarea = document.getElementById('{{ form.body.id_for_label }}');
+if (textarea) {
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+}
+</script>
+{% endblock %}

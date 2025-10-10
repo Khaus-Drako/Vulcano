@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}IHMAN - Proyectos Arquitectónicos{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-vulcano">
+    <div class="container-custom">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Descubre la <span class="highlight">Arquitectura</span> del Futuro
+            </h1>
+            <p class="hero-subtitle">
+                Explora proyectos únicos, conecta con arquitecturas profesionales y 
+                transforma tus ideas en realidad.
+            </p>
+            <div class="hero-actions">
+                <a href="#proyectos" class="btn btn-primary btn-lg">
+                    <i class="bi bi-search me-2"></i> Explorar Proyectos
+                </a>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'vulcano:register' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-person-plus me-2"></i> Únete Ahora
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Projects -->
+{% if featured_projects %}
+<section class="featured-section" id="destacados">
+    <div class="container-custom">
+        <div class="section-header">
+            <h2 class="section-title">Proyectos Destacados</h2>
+            <p class="section-subtitle">
+                Los mejores proyectos seleccionados por nuestro equipo
+            </p>
+        </div>
+        
+        <div class="featured-grid">
+            {% for project in featured_projects %}
+            <article class="card-vulcano fade-in-up" style="animation-delay: {{ forloop.counter0|add:'0.1'|stringformat:'f' }}s">
+                <a href="{% url 'vulcano:project_detail' project.slug %}">
+                    {% if project.get_main_image %}
+                    <img src="{{ project.get_main_image.image.url }}" 
+                         alt="{{ project.title }}" 
+                         class="card-image"
+                         loading="lazy">
+                    {% else %}
+                    <div class="card-image" style="background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light)); display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-building" style="font-size: 4rem; color: var(--color-primary);"></i>
+                    </div>
+                    {% endif %}
+                </a>
+                
+                <div class="card-body-vulcano">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge-vulcano badge-primary">
+                            {{ project.get_category_display }}
+                        </span>
+                        <span class="badge-vulcano badge-warning">
+                            <i class="bi bi-star-fill"></i> Destacado
+                        </span>
+                    </div>
+                    
+                    <h3 class="card-title">
+                        <a href="{% url 'vulcano:project_detail' project.slug %}" class="text-decoration-none">
+                            {{ project.title }}
+                        </a>
+                    </h3>
+                    
+                    <p class="card-text">
+                        {{ project.short_description|truncatewords:25 }}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3" style="border-top: 1px solid var(--border-light);">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-person-circle me-2 text-muted"></i>
+                            <small class="text-muted">{{ project.arquitecto.get_full_name }}</small>
+                        </div>
+                        <div>
+                            <i class="bi bi-eye me-1 text-muted"></i>
+                            <small class="text-muted">{{ project.views_count }}</small>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Filters Section -->
+<section class="filters-section" id="filtros">
+    <div class="container-custom">
+        <div class="filters-container">
+            <div class="filter-group">
+                <button class="filter-btn {% if not current_category %}active{% endif %}" 
+                        data-category="">
+                    Todos
+                </button>
+                {% for value, label in project.CATEGORY_CHOICES %}
+                <button class="filter-btn {% if current_category == value %}active{% endif %}" 
+                        data-category="{{ value }}">
+                    {{ label }}
+                </button>
+                {% endfor %}
+            </div>
+            
+            <div class="d-flex gap-2 flex-wrap flex-lg-nowrap">
+                <div class="search-box">
+                    <input type="text" 
+                           class="search-input" 
+                           placeholder="Buscar proyectos..."
+                           value="{{ search_query }}"
+                           data-search>
+                    <button class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                
+                <select class="sort-select" data-sort>
+                    <option value="-created_at" {% if current_sort == '-created_at' or not current_sort %}selected{% endif %}>
+                        Más recientes
+                    </option>
+                    <option value="created_at" {% if current_sort == 'created_at' %}selected{% endif %}>
+                        Más antiguos
+                    </option>
+                    <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>
+                        Más populares
+                    </option>
+                    <option value="title" {% if current_sort == 'title' %}selected{% endif %}>
+                        A-Z
+                    </option>
+                </select>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Projects Grid -->
+<section class="projects-section" id="proyectos">
+    <div class="container-custom">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">Todos los Proyectos</h2>
+            <span class="text-muted">{{ total_projects }} proyecto{{ total_projects|pluralize }}</span>
+        </div>
+        
+        {% if projects %}
+        <div class="projects-grid">
+            {% for project in projects %}
+            <article class="project-card" 
+                     data-category="{{ project.category }}"
+                     data-title="{{ project.title }}"
+                     data-description="{{ project.short_description }}"
+                     data-views="{{ project.views_count }}"
+                     data-created="{{ project.created_at|date:'Y-m-d' }}">
+                
+                <a href="{% url 'vulcano:project_detail' project.slug %}" class="text-decoration-none">
+                    <div class="project-image-container">
+                        {% if project.get_main_image %}
+                        <img src="{{ project.get_main_image.image.url }}" 
+                             alt="{{ project.title }}"
+                             class="project-image lazy-image"
+                             loading="lazy">
+                        {% else %}
+                        <div class="project-image" style="background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light)); display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-building" style="font-size: 3rem; color: var(--color-primary);"></i>
+                        </div>
+                        {% endif %}
+                        
+                        {% if project.is_featured %}
+                        <span class="project-badge badge-vulcano badge-warning">
+                            <i class="bi bi-star-fill"></i> Destacado
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="project-content">
+                        <div class="project-category">
+                            {{ project.get_category_display }}
+                        </div>
+                        
+                        <h3 class="project-title">{{ project.title }}</h3>
+                        
+                        <p class="project-description">
+                            {{ project.short_description }}
+                        </p>
+                        
+                        <div class="project-meta">
+                            <div class="project-meta-item">
+                                <i class="bi bi-geo-alt"></i>
+                                <span>{{ project.location|truncatewords:3 }}</span>
+                            </div>
+                            <div class="project-meta-item">
+                                <i class="bi bi-eye"></i>
+                                <span>{{ project.views_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </article>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if projects.has_other_pages %}
+        <nav aria-label="Paginación de proyectos" class="mt-5">
+            <ul class="pagination pagination-vulcano">
+                {% if projects.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ projects.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in projects.paginator.page_range %}
+                    {% if projects.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > projects.number|add:'-3' and num < projects.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if projects.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ projects.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3 class="empty-state-title">No se encontraron proyectos</h3>
+            <p class="empty-state-text">
+                {% if search_query or current_category %}
+                Intenta ajustar tus filtros de búsqueda
+                {% else %}
+                Aún no hay proyectos publicados
+                {% endif %}
+            </p>
+            {% if search_query or current_category %}
+            <button class="btn btn-primary mt-3" data-clear-filters>
+                <i class="bi bi-arrow-clockwise me-2"></i> Limpiar Filtros
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- CTA Section -->
+{% if not user.is_authenticated %}
+<section class="section-padding" style="background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light));">
+    <div class="container-custom text-center">
+        <h2 class="display-5 fw-bold mb-4">¿Listo para comenzar tu proyecto?</h2>
+        <p class="lead mb-4">
+            Únete a IHMAN y conecta con la mejor empresa de arquitectura del Perú.
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="{% url 'vulcano:register' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-person-plus me-2"></i> Registrarse Gratis
+            </a>
+            <a href="{% url 'vulcano:login' %}" class="btn btn-outline-primary btn-lg">
+                <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar lazy loading de imágenes
+    document.addEventListener('DOMContentLoaded', function() {
+        const lazyImages = document.querySelectorAll('.lazy-image');
+        
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.classList.add('loaded');
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+            
+            lazyImages.forEach(img => imageObserver.observe(img));
+        } else {
+            // Fallback para navegadores sin soporte
+            lazyImages.forEach(img => img.classList.add('loaded'));
+        }
+    });
+</script>
+{% endblock %}

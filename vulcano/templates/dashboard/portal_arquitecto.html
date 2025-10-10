@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Arquitecto - Vulcano{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper portal-arquitecto">
+    
+    <!-- Sidebar -->
+    {% include 'dashboard/partials/_sidebar.html' %}
+    
+    <!-- Main Content -->
+    <div class="dashboard-main">
+        
+        <!-- Toggle Sidebar (móvil) -->
+        <button class="sidebar-toggle">
+            <i class="bi bi-list"></i>
+        </button>
+        
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="bi bi-briefcase"></i> Mi Portafolio
+            </h1>
+            <p class="dashboard-subtitle">
+                Gestiona tus proyectos y conecta con clientes • {{ user.get_full_name }}
+            </p>
+            <div class="dashboard-actions">
+                <a href="{% url 'vulcano:project_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i> Nuevo Proyecto
+                </a>
+                <a href="{% url 'vulcano:profile' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-person me-2"></i> Mi Perfil
+                </a>
+            </div>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="bi bi-arrow-up"></i> +{{ new_projects_month }}
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_projects }}</div>
+                <div class="stat-label">Mis Proyectos</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_clients }}</div>
+                <div class="stat-label">Clientes</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="bi bi-arrow-up"></i> 18%
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_views }}</div>
+                <div class="stat-label">Vistas Totales</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ unread_messages }}</div>
+                <div class="stat-label">Mensajes Nuevos</div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="dashboard-section">
+            <div class="section-header-dash">
+                <h2 class="section-title-dash">
+                    <i class="bi bi-lightning me-2"></i> Acciones Rápidas
+                </h2>
+            </div>
+            
+            <div class="quick-actions">
+                <div class="quick-action-card" onclick="window.location='{% url 'vulcano:project_create' %}'">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-plus-circle"></i>
+                    </div>
+                    <div class="quick-action-title">Crear Proyecto</div>
+                </div>
+                
+                <div class="quick-action-card" onclick="window.location='{% url 'vulcano:inbox' %}'">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div class="quick-action-title">Ver Mensajes</div>
+                </div>
+                
+                <div class="quick-action-card" onclick="window.location='{% url 'vulcano:profile' %}'">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-person-gear"></i>
+                    </div>
+                    <div class="quick-action-title">Editar Perfil</div>
+                </div>
+                
+                <div class="quick-action-card" onclick="window.location='{% url 'vulcano:home' %}'">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-grid-3x3"></i>
+                    </div>
+                    <div class="quick-action-title">Ver Portafolio</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- My Projects -->
+        <div class="dashboard-section">
+            <div class="section-header-dash">
+                <h2 class="section-title-dash">
+                    <i class="bi bi-folder me-2"></i> Mis Proyectos
+                </h2>
+                <a href="{% url 'vulcano:project_create' %}" class="section-action">
+                    Nuevo proyecto <i class="bi bi-plus-circle"></i>
+                </a>
+            </div>
+            
+            <!-- Filter Tabs -->
+            <div class="mb-4">
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link {% if not filter or filter == 'all' %}active{% endif %}" 
+                           href="?filter=all">
+                            Todos ({{ total_projects }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if filter == 'published' %}active{% endif %}" 
+                           href="?filter=published">
+                            Publicados ({{ published_projects }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if filter == 'draft' %}active{% endif %}" 
+                           href="?filter=draft">
+                            Borradores ({{ draft_projects }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if filter == 'in_progress' %}active{% endif %}" 
+                           href="?filter=in_progress">
+                            En Progreso ({{ in_progress_projects }})
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if filter == 'completed' %}active{% endif %}" 
+                           href="?filter=completed">
+                            Completados ({{ completed_projects }})
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            {% if projects %}
+            <div class="project-list-dash">
+                {% for project in projects %}
+                <div class="project-item-dash">
+                    {% if project.get_main_image %}
+                    <img src="{{ project.get_main_image.image.url }}" 
+                         alt="{{ project.title }}"
+                         class="project-thumbnail-dash"
+                         onclick="window.location='{% url 'vulcano:project_detail' project.slug %}'">
+                    {% else %}
+                    <div class="project-thumbnail-dash" 
+                         style="background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light)); display: flex; align-items: center; justify-content: center; cursor: pointer;"
+                         onclick="window.location='{% url 'vulcano:project_detail' project.slug %}'">
+                        <i class="bi bi-building" style="font-size: 2rem; color: var(--color-primary);"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="project-info-dash">
+                        <h4 class="project-title-dash">
+                            <a href="{% url 'vulcano:project_detail' project.slug %}" class="text-decoration-none">
+                                {{ project.title }}
+                            </a>
+                        </h4>
+                        <div class="project-meta-dash">
+                            <span>
+                                <i class="bi bi-tag"></i> {{ project.get_category_display }}
+                            </span>
+                            <span>
+                                <i class="bi bi-calendar"></i> {{ project.created_at|date:"d/m/Y" }}
+                            </span>
+                            <span>
+                                <i class="bi bi-eye"></i> {{ project.views_count }} vistas
+                            </span>
+                            {% if project.clients.count %}
+                            <span>
+                                <i class="bi bi-people"></i> {{ project.clients.count }} cliente{{ project.clients.count|pluralize }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <p class="project-description-dash">
+                            {{ project.short_description|truncatewords:20 }}
+                        </p>
+                    </div>
+                    
+                    <div class="project-actions-dash">
+                        <div class="mb-2">
+                            <span class="badge-vulcano badge-{% if project.status == 'completed' %}success{% elif project.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                {{ project.get_status_display }}
+                            </span>
+                            {% if not project.is_published %}
+                            <span class="badge-vulcano badge-danger">
+                                <i class="bi bi-eye-slash"></i> Borrador
+                            </span>
+                            {% endif %}
+                            {% if project.is_featured %}
+                            <span class="badge-vulcano badge-warning">
+                                <i class="bi bi-star-fill"></i> Destacado
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'vulcano:project_detail' project.slug %}" 
+                               class="btn btn-outline-primary"
+                               title="Ver proyecto">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'vulcano:project_edit' project.slug %}" 
+                               class="btn btn-outline-primary"
+                               title="Editar proyecto">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'vulcano:project_delete' project.slug %}" 
+                               class="btn btn-outline-danger"
+                               title="Eliminar proyecto">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if projects.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination pagination-vulcano justify-content-center">
+                    {% if projects.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ projects.previous_page_number }}{% if filter %}&filter={{ filter }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in projects.paginator.page_range %}
+                        {% if projects.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > projects.number|add:'-3' and num < projects.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if filter %}&filter={{ filter }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if projects.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ projects.next_page_number }}{% if filter %}&filter={{ filter }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="empty-state-dash">
+                <div class="empty-icon-dash">
+                    <i class="bi bi-folder-x"></i>
+                </div>
+                <h3 class="empty-title-dash">No hay proyectos</h3>
+                <p class="empty-text-dash">Comienza creando tu primer proyecto arquitectónico</p>
+                <a href="{% url 'vulcano:project_create' %}" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-circle me-2"></i> Crear Proyecto
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Recent Messages -->
+        <div class="dashboard-section">
+            <div class="section-header-dash">
+                <h2 class="section-title-dash">
+                    <i class="bi bi-envelope me-2"></i> Mensajes Recientes
+                </h2>
+                <a href="{% url 'vulcano:inbox' %}" class="section-action">
+                    Ver todos <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            {% if recent_messages %}
+            <div class="list-group">
+                {% for message in recent_messages %}
+                <a href="{% url 'vulcano:message_detail' message.id %}" 
+                   class="list-group-item list-group-item-action {% if not message.is_read %}fw-bold{% endif %}">
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                {% if not message.is_read %}
+                                <span class="badge bg-primary">Nuevo</span>
+                                {% endif %}
+                                <strong>{{ message.sender.get_full_name|default:message.sender.username }}</strong>
+                            </div>
+                            <h6 class="mb-1">{{ message.subject }}</h6>
+                            <p class="mb-1 text-muted small">{{ message.body|truncatewords:15 }}</p>
+                            {% if message.project %}
+                            <small class="text-muted">
+                                <i class="bi bi-building"></i> {{ message.project.title|truncatewords:5 }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted text-nowrap ms-3">
+                            {{ message.created_at|timesince }} ago
+                        </small>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state-dash">
+                <div class="empty-icon-dash">
+                    <i class="bi bi-envelope"></i>
+                </div>
+                <h3 class="empty-title-dash">No hay mensajes</h3>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

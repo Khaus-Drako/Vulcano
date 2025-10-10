@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ project.title }} - Vulcano{% endblock %}
+
+{% block meta_description %}{{ project.short_description }}{% endblock %}
+{% block og_title %}{{ project.title }} - Vulcano{% endblock %}
+{% block og_description %}{{ project.short_description }}{% endblock %}
+{% block og_image %}{% if project.get_main_image %}{{ request.scheme }}://{{ request.get_host }}{{ project.get_main_image.image.url }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="project-detail-wrapper">
+    <div class="project-detail-container">
+        
+        <!-- Breadcrumb -->
+        <div class="project-breadcrumb">
+            <a href="{% url 'vulcano:home' %}" class="breadcrumb-link">Inicio</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'vulcano:home' %}?category={{ project.category }}" class="breadcrumb-link">
+                {{ project.get_category_display }}
+            </a>
+            <span class="mx-2">/</span>
+            <span>{{ project.title|truncatewords:5 }}</span>
+        </div>
+        
+        <!-- Project Header -->
+        <div class="project-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div class="project-badges">
+                    <span class="badge-vulcano badge-primary">
+                        {{ project.get_category_display }}
+                    </span>
+                    <span class="badge-vulcano badge-{% if project.status == 'completed' %}success{% elif project.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                        {{ project.get_status_display }}
+                    </span>
+                    {% if project.is_featured %}
+                    <span class="badge-vulcano badge-warning">
+                        <i class="bi bi-star-fill"></i> Destacado
+                    </span>
+                    {% endif %}
+                </div>
+                
+                {% if user.is_authenticated %}
+                    {% if user == project.arquitecto or user.profile.is_admin %}
+                    <div class="btn-group">
+                        <a href="{% url 'vulcano:project_edit' project.slug %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a href="{% url 'vulcano:project_delete' project.slug %}" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <h1 class="project-title-detail">{{ project.title }}</h1>
+            
+            <div class="project-meta-detail">
+                <div class="meta-item">
+                    <span class="meta-label">Ubicación</span>
+                    <span class="meta-value">
+                        <i class="bi bi-geo-alt me-1"></i> {{ project.location }}
+                    </span>
+                </div>
+                
+                {% if project.area %}
+                <div class="meta-item">
+                    <span class="meta-label">Área</span>
+                    <span class="meta-value">{{ project.area }} m²</span>
+                </div>
+                {% endif %}
+                
+                {% if project.budget %}
+                <div class="meta-item">
+                    <span class="meta-label">Presupuesto</span>
+                    <span class="meta-value">${{ project.budget|floatformat:0 }} MXN</span>
+                </div>
+                {% endif %}
+                
+                <div class="meta-item">
+                    <span class="meta-label">Vistas</span>
+                    <span class="meta-value">
+                        <i class="bi bi-eye me-1"></i> {{ project.views_count }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Project Gallery -->
+        {% if project_images %}
+        <div class="project-gallery">
+            <div class="gallery-main">
+                <img src="{{ project_images.0.image.url }}" 
+                     alt="{{ project.title }}" 
+                     class="gallery-main-image"
+                     id="mainImage"
+                     data-lightbox="project-gallery"
+                     data-src="{{ project_images.0.image.url }}">
+                
+                {% if project_images|length > 1 %}
+                <button class="gallery-nav-btn gallery-prev" onclick="changeImage(-1)" aria-label="Imagen anterior">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="gallery-nav-btn gallery-next" onclick="changeImage(1)" aria-label="Imagen siguiente">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+                {% endif %}
+            </div>
+            
+            {% if project_images|length > 1 %}
+            <div class="gallery-thumbnails">
+                {% for image in project_images %}
+                <img src="{{ image.image.url }}" 
+                     alt="{{ image.caption }}" 
+                     class="gallery-thumbnail {% if forloop.first %}active{% endif %}"
+                     onclick="selectImage({{ forloop.counter0 }})"
+                     data-index="{{ forloop.counter0 }}">
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Project Content -->
+        <div class="project-content-grid">
+            <div class="project-main-content">
+                <div class="content-section">
+                    <h2 class="content-section-title">Descripción del Proyecto</h2>
+                    <div class="content-text">{{ project.description|linebreaks }}</div>
+                </div>
+                
+                {% if project.start_date or project.end_date %}
+                <div class="content-section">
+                    <h2 class="content-section-title">Cronología</h2>
+                    <div class="content-text">
+                        {% if project.start_date %}
+                        <p><strong>Inicio:</strong> {{ project.start_date|date:"d F Y" }}</p>
+                        {% endif %}
+                        {% if project.end_date %}
+                        <p><strong>Finalización:</strong> {{ project.end_date|date:"d F Y" }}</p>
+                        {% endif %}
+                        
+                        {% if project.status == 'in_progress' and project_progress %}
+                        <div class="progress-container">
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill" style="width: {{ project_progress }}%"></div>
+                            </div>
+                            <div class="progress-label">
+                                <span>Progreso del proyecto</span>
+                                <span>{{ project_progress }}%</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="project-sidebar">
+                <!-- Architect Info -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-card-title">Arquitecto</h3>
+                    <div class="architect-info">
+                        {% if project.arquitecto.profile.avatar %}
+                        <img src="{{ project.arquitecto.profile.avatar.url }}" 
+                             alt="{{ project.arquitecto.get_full_name }}"
+                             class="architect-avatar">
+                        {% else %}
+                        <div class="architect-avatar" style="background: var(--color-primary-lighter); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                            <i class="bi bi-person-circle" style="font-size: 2rem;"></i>
+                        </div>
+                        {% endif %}
+                        <div class="architect-details">
+                            <div class="architect-name">{{ project.arquitecto.get_full_name }}</div>
+                            <div class="architect-role">
+                                {% if project.arquitecto.profile.company %}
+                                {{ project.arquitecto.profile.company }}
+                                {% else %}
+                                Arquitecto Profesional
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if project.arquitecto.profile.bio %}
+                    <p class="text-muted mt-3" style="font-size: 0.875rem;">
+                        {{ project.arquitecto.profile.bio|truncatewords:30 }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if user.is_authenticated and user != project.arquitecto %}
+                    <a href="{% url 'vulcano:message_compose' %}?recipient={{ project.arquitecto.id }}&project={{ project.id }}" 
+                       class="btn btn-primary w-100 mt-3">
+                        <i class="bi bi-envelope me-2"></i> Enviar Mensaje
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Project Specs -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-card-title">Especificaciones</h3>
+                    <div class="project-specs">
+                        <div class="spec-item">
+                            <span class="spec-label">Categoría</span>
+                            <span class="spec-value">{{ project.get_category_display }}</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Estado</span>
+                            <span class="spec-value">{{ project.get_status_display }}</span>
+                        </div>
+                        {% if project.area %}
+                        <div class="spec-item">
+                            <span class="spec-label">Área Total</span>
+                            <span class="spec-value">{{ project.area }} m²</span>
+                        </div>
+                        {% endif %}
+                        {% if project.budget %}
+                        <div class="spec-item">
+                            <span class="spec-label">Presupuesto</span>
+                            <span class="spec-value">${{ project.budget|floatformat:0 }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="spec-item">
+                            <span class="spec-label">Ubicación</span>
+                            <span class="spec-value">{{ project.location }}</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Publicado</span>
+                            <span class="spec-value">{{ project.created_at|date:"d/m/Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Share -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-card-title">Compartir</h3>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary flex-fill" onclick="shareOnFacebook()">
+                            <i class="bi bi-facebook"></i>
+                        </button>
+                        <button class="btn btn-outline-primary flex-fill" onclick="shareOnTwitter()">
+                            <i class="bi bi-twitter-x"></i>
+                        </button>
+                        <button class="btn btn-outline-primary flex-fill" onclick="shareOnLinkedIn()">
+                            <i class="bi bi-linkedin"></i>
+                        </button>
+                        <button class="btn btn-outline-primary flex-fill" onclick="copyLink()">
+                            <i class="bi bi-link-45deg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Projects -->
+        {% if related_projects %}
+        <div class="related-projects">
+            <h2 class="section-title-dash">Proyectos Relacionados</h2>
+            <div class="related-grid">
+                {% for related in related_projects %}
+                <article class="card-vulcano">
+                    <a href="{% url 'vulcano:project_detail' related.slug %}">
+                        {% if related.get_main_image %}
+                        <img src="{{ related.get_main_image.image.url }}" 
+                             alt="{{ related.title }}" 
+                             class="card-image"
+                             loading="lazy">
+                        {% else %}
+                        <div class="card-image" style="background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light)); display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-building" style="font-size: 3rem; color: var(--color-primary);"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                    <div class="card-body-vulcano">
+                        <span class="badge-vulcano badge-primary mb-2">
+                            {{ related.get_category_display }}
+                        </span>
+                        <h3 class="card-title">
+                            <a href="{% url 'vulcano:project_detail' related.slug %}" class="text-decoration-none">
+                                {{ related.title }}
+                            </a>
+                        </h3>
+                        <p class="card-text">{{ related.short_description|truncatewords:15 }}</p>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
+
+<script>
+const images = [
+    {% for image in project_images %}
+    {
+        url: "{{ image.image.url }}",
+        caption: "{{ image.caption|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+let currentImageIndex = 0;
+
+function selectImage(index) {
+    currentImageIndex = index;
+    updateMainImage();
+    updateThumbnails();
+}
+
+function changeImage(direction) {
+    currentImageIndex = (currentImageIndex + direction + images.length) % images.length;
+    updateMainImage();
+    updateThumbnails();
+}
+
+function updateMainImage() {
+    const mainImg = document.getElementById('mainImage');
+    mainImg.src = images[currentImageIndex].url;
+    mainImg.dataset.src = images[currentImageIndex].url;
+}
+
+function updateThumbnails() {
+    document.querySelectorAll('.gallery-thumbnail').forEach((thumb, index) => {
+        thumb.classList.toggle('active', index === currentImageIndex);
+    });
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') changeImage(-1);
+    if (e.key === 'ArrowRight') changeImage(1);
+});
+
+// Share functions
+function shareOnFacebook() {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+}
+
+function shareOnTwitter() {
+    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent('{{ project.title|escapejs }}')}`, '_blank');
+}
+
+function shareOnLinkedIn() {
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank');
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        VulcanoApp.showToast('Enlace copiado al portapapeles', 'success');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,155 @@
+{
+  "project": {
+    "name": "Vulcano Platform",
+    "version": "1.0.0",
+    "environment": "test",
+    "database": "Oracle 21c XE"
+  },
+  "test_settings": {
+    "verbosity": 2,
+    "parallel": 4,
+    "keepdb": false,
+    "debug_sql": false,
+    "failfast": false
+  },
+  "coverage_settings": {
+    "enabled": true,
+    "min_coverage": 80,
+    "exclude_patterns": [
+      "*/migrations/*",
+      "*/tests/*",
+      "*/admin.py",
+      "*/__init__.py"
+    ],
+    "report_formats": ["html", "xml", "console"]
+  },
+  "test_suites": {
+    "models": {
+      "path": "vulcano.tests.test_models",
+      "priority": "high",
+      "estimated_time": "2 min",
+      "dependencies": []
+    },
+    "views": {
+      "path": "vulcano.tests.test_views",
+      "priority": "high",
+      "estimated_time": "5 min",
+      "dependencies": ["models"]
+    },
+    "forms": {
+      "path": "vulcano.tests.test_forms",
+      "priority": "high",
+      "estimated_time": "3 min",
+      "dependencies": ["models"]
+    },
+    "authentication": {
+      "path": "vulcano.tests.test_authentication",
+      "priority": "critical",
+      "estimated_time": "4 min",
+      "dependencies": ["models", "views"]
+    },
+    "permissions": {
+      "path": "vulcano.tests.test_permissions",
+      "priority": "critical",
+      "estimated_time": "3 min",
+      "dependencies": ["authentication"]
+    },
+    "messaging": {
+      "path": "vulcano.tests.test_messaging",
+      "priority": "medium",
+      "estimated_time": "4 min",
+      "dependencies": ["models", "views"]
+    },
+    "integration": {
+      "path": "vulcano.tests.test_integration",
+      "priority": "high",
+      "estimated_time": "8 min",
+      "dependencies": ["models", "views", "forms", "authentication"]
+    },
+    "utils": {
+      "path": "vulcano.tests.test_utils",
+      "priority": "medium",
+      "estimated_time": "2 min",
+      "dependencies": []
+    }
+  },
+  "test_data": {
+    "users": {
+      "admin": {
+        "username": "admin_test",
+        "email": "admin@test.vulcano.com",
+        "password": "AdminPass123!",
+        "role": "admin"
+      },
+      "arquitecto": {
+        "username": "arquitecto_test",
+        "email": "arq@test.vulcano.com",
+        "password": "ArqPass123!",
+        "role": "arquitecto"
+      },
+      "cliente": {
+        "username": "cliente_test",
+        "email": "cli@test.vulcano.com",
+        "password": "CliPass123!",
+        "role": "cliente"
+      }
+    },
+    "projects": {
+      "sample_count": 10,
+      "categories": [
+        "residential",
+        "commercial",
+        "cultural"
+      ],
+      "statuses": [
+        "draft",
+        "in_progress",
+        "completed"
+      ]
+    }
+  },
+  "performance_benchmarks": {
+    "home_load_time": 2.0,
+    "project_detail_load_time": 1.5,
+    "dashboard_load_time": 2.5,
+    "query_max_time": 0.5,
+    "max_db_queries_per_page": 50
+  },
+  "security_checks": {
+    "csrf_protection": true,
+    "sql_injection_protection": true,
+    "xss_protection": true,
+    "password_hashing": true,
+    "session_security": true
+  },
+  "browser_testing": {
+    "browsers": [
+      "Chrome",
+      "Firefox",
+      "Edge",
+      "Safari"
+    ],
+    "resolutions": [
+      "1920x1080",
+      "1366x768",
+      "768x1024",
+      "375x667"
+    ]
+  },
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "recipients": ["qa@vulcano.com"]
+    },
+    "slack": {
+      "enabled": false,
+      "webhook_url": ""
+    }
+  },
+  "continuous_integration": {
+    "enabled": false,
+    "platform": "GitHub Actions",
+    "trigger": "on_push",
+    "branches": ["main", "develop"]
+  }
+}

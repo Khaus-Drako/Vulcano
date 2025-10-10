@@ -1,0 +1,390 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mensajes - Vulcano{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    
+    <!-- Sidebar -->
+    {% include 'dashboard/partials/_sidebar.html' %}
+    
+    <!-- Main Content -->
+    <div class="dashboard-main">
+        
+        <!-- Toggle Sidebar (móvil) -->
+        <button class="sidebar-toggle">
+            <i class="bi bi-list"></i>
+        </button>
+        
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="bi bi-envelope"></i> Mensajes
+            </h1>
+            <p class="dashboard-subtitle">
+                Gestiona tus conversaciones
+            </p>
+            <div class="dashboard-actions">
+                <a href="{% url 'vulcano:message_compose' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i> Nuevo Mensaje
+                </a>
+            </div>
+        </div>
+        
+        <!-- Messages Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <i class="bi bi-envelope-fill"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ total_messages }}</div>
+                    <div class="stat-label">Total Mensajes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                            <i class="bi bi-inbox-fill"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ received_messages }}</div>
+                    <div class="stat-label">Recibidos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                            <i class="bi bi-send-fill"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ sent_messages }}</div>
+                    <div class="stat-label">Enviados</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <i class="bi bi-envelope-exclamation-fill"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{{ unread_messages }}</div>
+                    <div class="stat-label">Sin Leer</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Messages Section -->
+        <div class="dashboard-section">
+            
+            <!-- Filter Tabs -->
+            <ul class="nav nav-tabs mb-4" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link {% if not filter or filter == 'all' %}active{% endif %}" 
+                       href="?filter=all"
+                       role="tab">
+                        <i class="bi bi-inbox me-2"></i> All ({{ total_messages }})
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link {% if filter == 'received' %}active{% endif %}" 
+                       href="?filter=received"
+                       role="tab">
+                        <i class="bi bi-envelope me-2"></i> Received ({{ received_messages }})
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link {% if filter == 'sent' %}active{% endif %}" 
+                       href="?filter=sent"
+                       role="tab">
+                        <i class="bi bi-send me-2"></i> Sent ({{ sent_messages }})
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link {% if filter == 'unread' %}active{% endif %}" 
+                       href="?filter=unread"
+                       role="tab">
+                        <i class="bi bi-envelope-exclamation me-2"></i> Unread ({{ unread_messages }})
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- Search Bar -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <form method="get" class="d-flex gap-2">
+                        <input type="hidden" name="filter" value="{{ filter }}">
+                        <input type="text" 
+                               name="search" 
+                               class="form-control" 
+                               placeholder="Buscar en mensajes..."
+                               value="{{ search_query }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                        {% if search_query %}
+                        <a href="?filter={{ filter }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x"></i> Limpiar
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-funnel"></i> Ordenar
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="?filter={{ filter }}&sort=-created_at">Más recientes</a></li>
+                            <li><a class="dropdown-item" href="?filter={{ filter }}&sort=created_at">Más antiguos</a></li>
+                            <li><a class="dropdown-item" href="?filter={{ filter }}&sort=subject">Asunto (A-Z)</a></li>
+                            <li><a class="dropdown-item" href="?filter={{ filter }}&sort=-subject">Asunto (Z-A)</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages List -->
+            {% if messages_list %}
+            <div class="list-group">
+                {% for message in messages_list %}
+                <a href="{% url 'vulcano:message_detail' message.id %}" 
+                   class="list-group-item list-group-item-action {% if not message.is_read and message.recipient == user %}list-group-item-warning{% endif %}">
+                    <div class="d-flex w-100 align-items-start gap-3">
+                        
+                        <!-- Avatar -->
+                        <div class="flex-shrink-0">
+                            {% with other_user=message.recipient.username %}
+                                {% if message.recipient == user %}
+                                    {% with other_user=message.sender %}
+                                        {% if other_user.profile.avatar %}
+                                        <img src="{{ other_user.profile.avatar.url }}" 
+                                             alt="{{ other_user.username }}"
+                                             class="rounded-circle"
+                                             style="width: 48px; height: 48px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="rounded-circle" 
+                                             style="width: 48px; height: 48px; background: var(--color-primary-lighter); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                                            <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    {% with other_user=message.recipient %}
+                                        {% if other_user.profile.avatar %}
+                                        <img src="{{ other_user.profile.avatar.url }}" 
+                                             alt="{{ other_user.username }}"
+                                             class="rounded-circle"
+                                             style="width: 48px; height: 48px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="rounded-circle" 
+                                             style="width: 48px; height: 48px; background: var(--color-primary-lighter); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                                            <i class="bi bi-person-circle" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        
+                        <!-- Message Content -->
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    {% if message.recipient == user %}
+                                    <strong class="{% if not message.is_read %}fw-bold{% endif %}">
+                                        De: {{ message.sender.get_full_name|default:message.sender.username }}
+                                    </strong>
+                                    {% else %}
+                                    <strong>
+                                        Para: {{ message.recipient.get_full_name|default:message.recipient.username }}
+                                    </strong>
+                                    {% endif %}
+                                    
+                                    {% if not message.is_read and message.recipient == user %}
+                                    <span class="badge bg-warning text-dark ms-2">Nuevo</span>
+                                    {% endif %}
+                                    
+                                    {% if message.recipient == user %}
+                                    <span class="badge bg-success ms-1">
+                                        <i class="bi bi-arrow-down"></i> Recibido
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-primary ms-1">
+                                        <i class="bi bi-arrow-up"></i> Enviado
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-end">
+                                    <small class="text-muted d-block">
+                                        {{ message.created_at|date:"d/m/Y H:i" }}
+                                    </small>
+                                    <small class="text-muted">
+                                        {{ message.created_at|timesince }} ago
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <h6 class="mb-2 {% if not message.is_read and message.recipient == user %}fw-bold{% endif %}">
+                                {{ message.subject }}
+                            </h6>
+                            
+                            <p class="mb-2 text-muted">
+                                {{ message.body|truncatewords:20 }}
+                            </p>
+                            
+                            {% if message.project %}
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-building"></i> {{ message.project.title|truncatewords:6 }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex-shrink-0">
+                            <div class="btn-group-vertical btn-group-sm">
+                                {% if message.recipient == user and not message.is_read %}
+                                <button type="button" 
+                                        class="btn btn-outline-success"
+                                        onclick="event.preventDefault(); event.stopPropagation(); markAsRead({{ message.id }});"
+                                        title="Marcar como leído">
+                                    <i class="bi bi-check2-all"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <button type="button" 
+                                        class="btn btn-outline-danger"
+                                        onclick="event.preventDefault(); event.stopPropagation(); deleteMessage({{ message.id }});"
+                                        title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if messages_list.has_other_pages %}
+            <nav aria-label="Paginación de mensajes" class="mt-4">
+                <ul class="pagination pagination-vulcano justify-content-center">
+                    {% if messages_list.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ messages_list.previous_page_number }}{% if filter %}&filter={{ filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in messages_list.paginator.page_range %}
+                        {% if messages_list.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > messages_list.number|add:'-3' and num < messages_list.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if filter %}&filter={{ filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if messages_list.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ messages_list.next_page_number }}{% if filter %}&filter={{ filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <!-- Empty State -->
+            <div class="empty-state-dash">
+                <div class="empty-icon-dash">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h3 class="empty-title-dash">
+                    {% if search_query %}
+                    No se encontraron mensajes
+                    {% else %}
+                    No tienes mensajes
+                    {% endif %}
+                </h3>
+                <p class="empty-text-dash">
+                    {% if search_query %}
+                    Intenta con otros términos de búsqueda
+                    {% else %}
+                    Comienza enviando un mensaje a un arquitecto o cliente
+                    {% endif %}
+                </p>
+                <a href="{% url 'vulcano:message_compose' %}" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-circle me-2"></i> Nuevo Mensaje
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsRead(messageId) {
+    fetch("{% url 'vulcano:ajax_mark_message_read' 0 %}".replace('0', messageId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error al marcar el mensaje como leído');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+}
+
+function deleteMessage(messageId) {
+    if (confirm('¿Estás seguro de eliminar este mensaje? Esta acción no se puede deshacer.')) {
+        fetch("{% url 'vulcano:message_delete' 0 %}".replace('0', messageId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al eliminar el mensaje');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        });
+    }
+}
+</script>
+{% endblock %}

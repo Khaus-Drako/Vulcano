@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - Vulcano{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    
+    <!-- Sidebar -->
+    {% include 'dashboard/partials/_sidebar.html' %}
+    
+    <!-- Main Content -->
+    <div class="dashboard-main">
+        
+        <!-- Toggle Sidebar (móvil) -->
+        <button class="sidebar-toggle">
+            <i class="bi bi-list"></i>
+        </button>
+        
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="bi bi-person-circle"></i> Mi Perfil
+            </h1>
+            <p class="dashboard-subtitle">
+                Gestiona tu información personal y configuración
+            </p>
+        </div>
+        
+        <!-- Profile Content -->
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="dashboard-section">
+                    <div class="text-center">
+                        {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" 
+                             alt="{{ user.username }}"
+                             class="rounded-circle mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover; border: 4px solid var(--color-primary);">
+                        {% else %}
+                        <div class="rounded-circle mb-3 mx-auto" 
+                             style="width: 150px; height: 150px; background: var(--color-primary-lighter); display: flex; align-items: center; justify-content: center; border: 4px solid var(--color-primary);">
+                            <i class="bi bi-person-circle" style="font-size: 5rem; color: var(--color-primary);"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <h3 class="mb-1">{{ user.get_full_name|default:user.username }}</h3>
+                        <p class="text-muted mb-3">@{{ user.username }}</p>
+                        
+                        <span class="badge-vulcano badge-{% if user.profile.role == 'admin' %}danger{% elif user.profile.role == 'arquitecto' %}primary{% else %}info{% endif %} mb-3">
+                            {{ user.profile.get_role_display }}
+                        </span>
+                        
+                        {% if user.profile.company %}
+                        <p class="text-muted">
+                            <i class="bi bi-building me-1"></i> {{ user.profile.company }}
+                        </p>
+                        {% endif %}
+                        
+                        <button type="button" class="btn btn-outline-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#avatarModal">
+                            <i class="bi bi-camera me-2"></i> Cambiar Foto
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="dashboard-section mt-4">
+                    <h5 class="mb-3">Estadísticas</h5>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Miembro desde</span>
+                            <strong>{{ user.date_joined|date:"d/m/Y" }}</strong>
+                        </div>
+                        {% if user.profile.is_arquitecto %}
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Proyectos</span>
+                            <strong>{{ user.arquitecto_projects.count }}</strong>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Mensajes</span>
+                            <strong>{{ user.sent_messages.count|add:user.received_messages.count }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8">
+                <div class="dashboard-section">
+                    <h3 class="mb-4">
+                        <i class="bi bi-pencil-square me-2"></i> Editar Información
+                    </h3>
+                    
+                    <form method="post" enctype="multipart/form-data" data-validate="true" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row g-3">
+                            <!-- Nombre -->
+                            <div class="col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    Nombre <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.first_name.name }}" 
+                                       id="{{ form.first_name.id_for_label }}"
+                                       class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                       value="{{ form.first_name.value|default:'' }}"
+                                       required>
+                                {% if form.first_name.errors %}
+                                <div class="invalid-feedback">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Apellido -->
+                            <div class="col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    Apellido <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.last_name.name }}" 
+                                       id="{{ form.last_name.id_for_label }}"
+                                       class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                       value="{{ form.last_name.value|default:'' }}"
+                                       required>
+                                {% if form.last_name.errors %}
+                                <div class="invalid-feedback">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Email -->
+                            <div class="col-12">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" 
+                                       name="{{ form.email.name }}" 
+                                       id="{{ form.email.id_for_label }}"
+                                       class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                                       value="{{ form.email.value|default:'' }}"
+                                       required>
+                                {% if form.email.errors %}
+                                <div class="invalid-feedback">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Teléfono -->
+                            <div class="col-md-6">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                    Teléfono
+                                </label>
+                                <input type="tel" 
+                                       name="{{ form.phone.name }}" 
+                                       id="{{ form.phone.id_for_label }}"
+                                       class="form-control {% if form.phone.errors %}is-invalid{% endif %}"
+                                       value="{{ form.phone.value|default:'' }}"
+                                       placeholder="+52 55 1234 5678">
+                                {% if form.phone.errors %}
+                                <div class="invalid-feedback">{{ form.phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Empresa -->
+                            <div class="col-md-6">
+                                <label for="{{ form.company.id_for_label }}" class="form-label">
+                                    Empresa/Estudio
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.company.name }}" 
+                                       id="{{ form.company.id_for_label }}"
+                                       class="form-control {% if form.company.errors %}is-invalid{% endif %}"
+                                       value="{{ form.company.value|default:'' }}">
+                                {% if form.company.errors %}
+                                <div class="invalid-feedback">{{ form.company.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Biografía -->
+                            <div class="col-12">
+                                <label for="{{ form.bio.id_for_label }}" class="form-label">
+                                    Biografía
+                                </label>
+                                <textarea name="{{ form.bio.name }}" 
+                                          id="{{ form.bio.id_for_label }}"
+                                          class="form-control {% if form.bio.errors %}is-invalid{% endif %}"
+                                          rows="4"
+                                          placeholder="Cuéntanos sobre ti..."
+                                          data-autoresize="true">{{ form.bio.value|default:'' }}</textarea>
+                                {% if form.bio.errors %}
+                                <div class="invalid-feedback">{{ form.bio.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    Máximo 500 caracteres
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'vulcano:dashboard' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Change Password -->
+                <div class="dashboard-section mt-4">
+                    <h3 class="mb-4">
+                        <i class="bi bi-shield-lock me-2"></i> Cambiar Contraseña
+                    </h3>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Por seguridad, te recomendamos cambiar tu contraseña periódicamente.
+                    </div>
+                    
+                    <a href="{% url 'vulcano:password_change' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-key me-2"></i> Cambiar Contraseña
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambiar avatar -->
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="avatarModalLabel">Cambiar Foto de Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="avatarInput" class="form-label">Selecciona una imagen</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="avatarInput" 
+                               name="avatar"
+                               accept="image/jpeg,image/png,image/jpg"
+                               required>
+                        <small class="form-text text-muted">
+                            JPG, PNG o JPEG (máx. 2MB)
+                        </small>
+                    </div>
+                    <div id="avatarPreview"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Foto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('avatarInput')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('avatarPreview');
+    
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `
+                <img src="${e.target.result}" 
+                     class="img-fluid rounded" 
+                     style="max-height: 300px;"
+                     alt="Preview">
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,254 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}VulIHMANcano - Plataforma de gestión de proyectos arquitectónicos. Descubre proyectos únicos y conecta con arquitecturas profesionales.{% endblock %}">
+    <meta name="keywords" content="arquitectura, proyectos arquitectónicos, diseño, construcción, Perú">
+    <meta name="author" content="IHMAN Architecture">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{% block og_title %}IHMAN - Arquitectura Contemporánea{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Plataforma de gestión de proyectos arquitectónicos{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{% static 'images/og-image.jpg' %}{% endblock %}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
+    <meta property="twitter:title" content="{% block twitter_title %}IHMAN - Arquitectura Contemporánea{% endblock %}">
+    <meta property="twitter:description" content="{% block twitter_description %}Plataforma de gestión de proyectos arquitectónicos{% endblock %}">
+    <meta property="twitter:image" content="{% block twitter_image %}{% static 'images/twitter-image.jpg' %}{% endblock %}">
+    
+    <title>{% block title %}IHMAN - Arquitectura Contemporánea{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/variables.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/projects.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{% static 'css/variables.css' %}" as="style">
+    <link rel="preload" href="{% static 'css/base.css' %}" as="style">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    
+    <!-- Navigation Bar (minimalista) -->
+    {% block navbar %}
+    <nav class="navbar navbar-expand-lg navbar-vulcano">
+        <div class="container-fluid container-custom">
+            <!-- Contenedor izquierdo: botón del sidebar y logo -->
+            <div class="d-flex align-items-center">
+                <button type="button" class="sidebar-toggle me-2" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <a class="navbar-brand" href="{% url 'vulcano:home' %}">
+                    <span>IHMAN</span>
+                </a>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                {% if user.is_authenticated %}
+                    <span class="navbar-user">
+                        <i class="bi bi-person-circle me-1"></i> {{ user.get_full_name|default:user.username }}
+                    </span>
+                    <a class="btn btn-outline-secondary btn-sm ms-2" href="{% url 'vulcano:logout' %}">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </a>
+                {% else %}
+                    <a class="btn btn-outline-primary btn-sm" href="{% url 'vulcano:login' %}">
+                        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                    </a>
+                    <a class="btn btn-primary btn-sm ms-2" href="{% url 'vulcano:register' %}">
+                        Registrarse
+                    </a>
+                {% endif %}
+                <button class="theme-toggle ms-2" aria-label="Cambiar tema" title="Cambiar tema">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+    {% endblock %}
+    
+    <!-- Messages/Alerts -->
+    {% if messages %}
+    <div class="container-fluid container-custom mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" data-auto-dismiss="true">
+            <div class="d-flex align-items-center">
+                {% if message.tags == 'success' %}
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                {% elif message.tags == 'warning' %}
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {% else %}
+                <i class="bi bi-info-circle-fill me-2"></i>
+                {% endif %}
+                <div>{{ message }}</div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Sidebar + Main Content Layout -->
+    <div class="d-flex h-100">
+        <!-- Sidebar Content -->
+        <div class="dashboard-sidebar" id="sidebar">
+            {% include 'partials/_sidebar.html' %}
+        </div>
+        <!-- Main Content -->
+        <main id="main-content" class="flex-grow-1 {% block main_class %}{% endblock %}">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <!-- Footer -->
+    {% block footer %}
+    <footer class="footer-vulcano">
+        <div class="container-fluid container-custom">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h3 class="footer-title" style="font-family: var(--font-serif);">IHMAN</h3>
+                    <p class="text-muted">
+                        Plataforma líder en gestión de proyectos arquitectónicos. 
+                        Conectamos contigo para crear espacios únicos.
+                    </p>
+                    <div class="d-flex gap-3 mt-3">
+                        <a href="#" class="text-muted" aria-label="Facebook">
+                            <i class="bi bi-facebook fs-4"></i>
+                        </a>
+                        <a href="#" class="text-muted" aria-label="Instagram">
+                            <i class="bi bi-instagram fs-4"></i>
+                        </a>
+                        <a href="#" class="text-muted" aria-label="LinkedIn">
+                            <i class="bi bi-linkedin fs-4"></i>
+                        </a>
+                        <a href="#" class="text-muted" aria-label="Twitter">
+                            <i class="bi bi-twitter-x fs-4"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                    <h5 class="footer-title">Explorar</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'vulcano:home' %}" class="footer-link">Inicio</a></li>
+                        <li><a href="{% url 'vulcano:home' %}?category=" class="footer-link">Proyectos</a></li>
+                        <li><a href="#" class="footer-link">Arquitectos</a></li>
+                        <li><a href="#" class="footer-link">Sobre Nosotros</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+                    <h5 class="footer-title">Categorías</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'vulcano:home' %}?category=residential" class="footer-link">Residencial</a></li>
+                        <li><a href="{% url 'vulcano:home' %}?category=commercial" class="footer-link">Comercial</a></li>
+                        <li><a href="{% url 'vulcano:home' %}?category=cultural" class="footer-link">Cultural</a></li>
+                        <li><a href="{% url 'vulcano:home' %}?category=landscape" class="footer-link">Paisajismo</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-lg-4 col-md-12">
+                    <h5 class="footer-title">Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-geo-alt me-2"></i>
+                            <span class="text-muted">Ciudad de Lima, Perú</span>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-envelope me-2"></i>
+                            <a href="mailto:contacto@ihman.com" class="footer-link">contacto@ihman.com</a>
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-telephone me-2"></i>
+                            <a href="tel:+51984421731" class="footer-link">+51 984 421 731</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <p class="text-muted mb-0">
+                        &copy; {% now "Y" %} IHMAN Architecture. Todos los derechos reservados.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="#" class="footer-link me-3">Términos de Uso</a>
+                    <a href="#" class="footer-link me-3">Privacidad</a>
+                    <a href="#" class="footer-link">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+    
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTop" class="btn btn-primary rounded-circle shadow" 
+            style="position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; display: none; z-index: 1000;"
+            aria-label="Volver arriba">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+    
+    <!-- Dependencies and Custom JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/sidebar.js' %}"></script>
+    <script src="{% static 'js/lightbox.js' %}"></script>
+    <script src="{% static 'js/filters.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Scroll to Top Script -->
+    <script>
+        // Mostrar/ocultar botón de scroll to top
+        window.addEventListener('scroll', function() {
+            const scrollBtn = document.getElementById('scrollToTop');
+            if (window.pageYOffset > 300) {
+                scrollBtn.style.display = 'block';
+            } else {
+                scrollBtn.style.display = 'none';
+            }
+        });
+        
+        // Funcionalidad de scroll to top
+        document.getElementById('scrollToTop').addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>

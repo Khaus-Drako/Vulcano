@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Administrador - Vulcano{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper portal-admin">
+    
+    <!-- Sidebar -->
+    {% include 'dashboard/partials/_sidebar.html' %}
+    
+    <!-- Main Content -->
+    <div class="dashboard-main">
+        
+        <!-- Toggle Sidebar (móvil) -->
+        <button class="sidebar-toggle">
+            <i class="bi bi-list"></i>
+        </button>
+        
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">
+                <i class="bi bi-speedometer2"></i> Dashboard Administrador
+            </h1>
+            <p class="dashboard-subtitle">
+                Vista general del sistema • {{ user.get_full_name }}
+            </p>
+            <div class="dashboard-actions">
+                <a href="{% url 'vulcano:project_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i> Nuevo Proyecto
+                </a>
+                <a href="/admin/" class="btn btn-outline-primary" target="_blank">
+                    <i class="bi bi-gear me-2"></i> Admin Django
+                </a>
+            </div>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="bi bi-arrow-up"></i> 12%
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_users }}</div>
+                <div class="stat-label">Usuarios Totales</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="bi bi-arrow-up"></i> 8%
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_projects }}</div>
+                <div class="stat-label">Proyectos</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_messages }}</div>
+                <div class="stat-label">Mensajes</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div class="stat-trend up">
+                        <i class="bi bi-arrow-up"></i> 24%
+                    </div>
+                </div>
+                <div class="stat-value">{{ stats.total_views|default:0 }}</div>
+                <div class="stat-label">Vistas Totales</div>
+            </div>
+        </div>
+        
+        <!-- Recent Users -->
+        <div class="dashboard-section">
+            <div class="section-header-dash">
+                <h2 class="section-title-dash">
+                    <i class="bi bi-person-plus me-2"></i> Usuarios Recientes
+                </h2>
+                <a href="/admin/auth/user/" class="section-action" target="_blank">
+                    Ver todos <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <div class="table-responsive-dash">
+                <table class="table-dash">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
+                            <th>Rol</th>
+                            <th>Email</th>
+                            <th>Fecha de Registro</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_item in recent_users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if user_item.profile.avatar %}
+                                    <img src="{{ user_item.profile.avatar.url }}" 
+                                         alt="{{ user_item.username }}"
+                                         style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+                                    {% else %}
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary-lighter); display: flex; align-items: center; justify-content: center; color: var(--color-primary);">
+                                        {{ user_item.username|first|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <strong>{{ user_item.username }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ user_item.get_full_name|default:"-" }}</td>
+                            <td>
+                                <span class="badge-vulcano badge-{% if user_item.profile.role == 'admin' %}danger{% elif user_item.profile.role == 'arquitecto' %}primary{% else %}info{% endif %}">
+                                    {{ user_item.profile.get_role_display }}
+                                </span>
+                            </td>
+                            <td>{{ user_item.email }}</td>
+                            <td>{{ user_item.date_joined|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if user_item.is_active %}
+                                <span class="badge-vulcano badge-success">Activo</span>
+                                {% else %}
+                                <span class="badge-vulcano badge-danger">Inactivo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No hay usuarios recientes
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Recent Projects -->
+        <div class="dashboard-section">
+            <div class="section-header-dash">
+                <h2 class="section-title-dash">
+                    <i class="bi bi-building me-2"></i> Proyectos Recientes
+                </h2>
+                <a href="{% url 'vulcano:home' %}" class="section-action">
+                    Ver todos <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <div class="project-list-dash">
+                {% for project in recent_projects %}
+                <div class="project-item-dash" onclick="window.location='{% url 'vulcano:project_detail' project.slug %}'">
+                    {% if project.get_main_image %}
+                    <img src="{{ project.get_main_image.image.url }}" 
+                         alt="{{ project.title }}"
+                         class="project-thumbnail-dash">
+                    {% else %}
+                    <div class="project-thumbnail-dash" style="background: linear-gradient(135deg, var(--color-primary-lighter), var(--color-primary-light)); display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-building" style="font-size: 2rem; color: var(--color-primary);"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="project-info-dash">
+                        <h4 class="project-title-dash">{{ project.title }}</h4>
+                        <div class="project-meta-dash">
+                            <span>
+                                <i class="bi bi-person"></i> {{ project.arquitecto.get_full_name }}
+                            </span>
+                            <span>
+                                <i class="bi bi-tag"></i> {{ project.get_category_display }}
+                            </span>
+                            <span>
+                                <i class="bi bi-calendar"></i> {{ project.created_at|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                        <p class="project-description-dash">
+                            {{ project.short_description|truncatewords:20 }}
+                        </p>
+                    </div>
+                    
+                    <div class="project-actions-dash">
+                        <span class="badge-vulcano badge-{% if project.status == 'completed' %}success{% elif project.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                            {{ project.get_status_display }}
+                        </span>
+                        {% if project.is_featured %}
+                        <span class="badge-vulcano badge-warning">
+                            <i class="bi bi-star-fill"></i> Destacado
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state-dash">
+                    <div class="empty-icon-dash">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <h3 class="empty-title-dash">No hay proyectos recientes</h3>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Recent Messages -->
+        <div class="dashboard-section">
+            <div class="section-header-dash">
+                <h2 class="section-title-dash">
+                    <i class="bi bi-envelope me-2"></i> Mensajes Recientes
+                </h2>
+                <a href="{% url 'vulcano:inbox' %}" class="section-action">
+                    Ver todos <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            
+            <div class="table-responsive-dash">
+                <table class="table-dash">
+                    <thead>
+                        <tr>
+                            <th>De</th>
+                            <th>Para</th>
+                            <th>Asunto</th>
+                            <th>Proyecto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for message in recent_messages %}
+                        <tr style="cursor: pointer;" onclick="window.location='{% url 'vulcano:message_detail' message.id %}'">
+                            <td>{{ message.sender.get_full_name|default:message.sender.username }}</td>
+                            <td>{{ message.recipient.get_full_name|default:message.recipient.username }}</td>
+                            <td>
+                                <strong>{{ message.subject|truncatewords:8 }}</strong>
+                            </td>
+                            <td>
+                                {% if message.project %}
+                                <a href="{% url 'vulcano:project_detail' message.project.slug %}" class="text-decoration-none">
+                                    {{ message.project.title|truncatewords:5 }}
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>{{ message.created_at|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if message.is_read %}
+                                <span class="badge-vulcano badge-success">
+                                    <i class="bi bi-check-all"></i> Leído
+                                </span>
+                                {% else %}
+                                <span class="badge-vulcano badge-warning">
+                                    <i class="bi bi-envelope"></i> No leído
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                No hay mensajes recientes
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
