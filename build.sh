@@ -27,7 +27,7 @@ python manage.py migrate --noinput
 
 echo ""
 echo "  Load data example..."
-python python manage.py load_sample_data
+python manage.py load_sample_data
 
 echo ""
 echo "======================================"
