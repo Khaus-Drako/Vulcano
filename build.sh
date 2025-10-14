@@ -26,6 +26,10 @@ echo "  Running database migrations..."
 python manage.py migrate --noinput
 
 echo ""
+echo "  Load data example..."
+python python manage.py load_sample_data
+
+echo ""
 echo "======================================"
 echo "✅ Build completed successfully!"
 echo "======================================"
