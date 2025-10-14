@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Debug Portal Arquitecto - IHAMN{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper portal-arquitecto">
+    <div class="dashboard-main">
+        <h1>Debugging Information</h1>
+        
+        <h2>Request User</h2>
+        <pre>{{ request.user.username }}</pre>
+        <pre>{{ request.user.get_full_name }}</pre>
+        <pre>Is Authenticated: {{ request.user.is_authenticated }}</pre>
+        <pre>Is Active: {{ request.user.is_active }}</pre>
+        
+        <h2>Context Data</h2>
+        <h3>Projects Variable</h3>
+        <pre>Projects exists: {% if projects %}Yes{% else %}No{% endif %}</pre>
+        <pre>Projects type: {{ projects|default:"None"|stringformat:"r" }}</pre>
+        <pre>Projects count: {{ projects.count|default:"N/A" }}</pre>
+        
+        {% if projects %}
+            <h3>Projects List</h3>
+            <ul>
+            {% for project in projects %}
+                <li>
+                    <strong>Title:</strong> {{ project.title }}<br>
+                    <strong>Slug:</strong> {{ project.slug }}<br>
+                    <strong>Status:</strong> {{ project.status }}<br>
+                    <strong>Created:</strong> {{ project.created_at }}<br>
+                    <strong>Published:</strong> {{ project.is_published }}<br>
+                    <strong>Main Image:</strong> {% if project.get_main_image %}Yes{% else %}No{% endif %}<br>
+                    <hr>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p>No projects found in context</p>
+        {% endif %}
+
+        <h2>All Context Variables</h2>
+        <ul>
+        {% for key, value in request.resolver_match.view_kwargs.items %}
+            <li><strong>{{ key }}:</strong> {{ value }}</li>
+        {% endfor %}
+        </ul>
+
+        <h2>View Function</h2>
+        <pre>{{ request.resolver_match.view_name }}</pre>
+        <pre>{{ request.resolver_match.func }}</pre>
+
+        <h2>Query Parameters</h2>
+        <ul>
+        {% for key, value in request.GET.items %}
+            <li><strong>{{ key }}:</strong> {{ value }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

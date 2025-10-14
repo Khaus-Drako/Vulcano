@@ -1,0 +1,17 @@
+[Unit]
+Description=Vulcano Gunicorn Daemon
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/ruta/a/tu/proyecto/Vulcano
+ExecStart=/ruta/a/tu/entorno/virtual/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/run/vulcano.sock \
+    --access-logfile /var/log/vulcano/access.log \
+    --error-logfile /var/log/vulcano/error.log \
+    webVulcano.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
