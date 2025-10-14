@@ -626,13 +626,13 @@ Infraestructura industrial que establece nuevos estándares de eficiencia operat
             },
             {
                 'sender': users['clientes'][1],
-                'recipient': users['arquitectos'][1],
+                'recipient': users['arquitectos'][0],
                 'project': projects[1],
                 'subject': 'Modificación en diseño de la fachada',
                 'body': 'Juan, después de revisar los renders, nos gustaría proponer algunos cambios en los materiales de la fachada. ¿Podríamos agendar una videollamada para discutir las opciones?'
             },
             {
-                'sender': users['arquitectos'][1],
+                'sender': users['arquitectos'][0],
                 'recipient': users['clientes'][1],
                 'project': projects[1],
                 'subject': 'RE: Modificación en diseño de la fachada',
@@ -640,7 +640,7 @@ Infraestructura industrial que establece nuevos estándares de eficiencia operat
             },
             {
                 'sender': users['clientes'][2],
-                'recipient': users['arquitectos'][2],
+                'recipient': users['arquitectos'][0],
                 'project': projects[2],
                 'subject': 'Presupuesto adicional para certificación LEED',
                 'body': 'Ana, nos interesa obtener la certificación LEED Platinum. ¿Podrías enviarnos un presupuesto detallado de los cambios necesarios y el cronograma actualizado?'
