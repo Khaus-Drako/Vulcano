@@ -90,9 +90,9 @@ class Command(BaseCommand):
         admin_user, created = User.objects.get_or_create(
                 username='admin',
                 defaults={
-                    'email': 'admin@vulcano.com',
-                    'first_name': 'Carlos',
-                    'last_name': 'Administrador',
+                    'email': 'admin@ihman.com',
+                    'first_name': 'Jhonny Juan',
+                    'last_name': 'Rugel Guevara',
                     'is_staff': True,
                     'is_superuser': True,
                 }
@@ -103,9 +103,9 @@ class Command(BaseCommand):
 
         profile, _ = UserProfile.objects.get_or_create(user=admin_user)
         profile.role = 'admin'
-        profile.phone = '+52 55 1234 5678'
-        profile.company = 'Vulcano Architecture'
-        profile.bio = 'Administrador principal de la plataforma Vulcano.'
+        profile.phone = '+51 997 937 653'
+        profile.company = 'Ihman'
+        profile.bio = 'Administrador principal de la plataforma Ihman.'
         profile.save()
 
         users['admin'] = admin_user
@@ -114,32 +114,14 @@ class Command(BaseCommand):
         # Arquitectos
         arquitectos_data = [
             {
-                'username': 'arquitecto1',
-                'email': 'maria.lopez@arquitectura.com',
-                'first_name': 'María',
-                'last_name': 'López García',
-                'phone': '+52 55 2345 6789',
+                'username': 'jhilariop',
+                'email': 'Jhostyn.Hilario@ihman.com',
+                'first_name': 'Jhostyn Alfredo',
+                'last_name': 'Hilario Peves',
+                'phone': '+51 941 016 940',
                 'company': 'López Arquitectos',
-                'bio': 'Arquitecta especializada en diseño residencial contemporáneo con más de 15 años de experiencia. Enfoque en sostenibilidad y espacios minimalistas.'
+                'bio': 'Arquitecta especializada en diseño de interiores con más de 5 años de experiencia. Enfoque en sostenibilidad y espacios minimalistas.'
             },
-            {
-                'username': 'arquitecto2',
-                'email': 'juan.martinez@designstudio.com',
-                'first_name': 'Juan',
-                'last_name': 'Martínez Ruiz',
-                'phone': '+52 55 3456 7890',
-                'company': 'Martínez Design Studio',
-                'bio': 'Especialista en proyectos comerciales e industriales. Ganador del Premio Nacional de Arquitectura 2022.'
-            },
-            {
-                'username': 'arquitecto3',
-                'email': 'ana.torres@torres.mx',
-                'first_name': 'Ana',
-                'last_name': 'Torres Sánchez',
-                'phone': '+52 55 4567 8901',
-                'company': 'Torres Arquitectura',
-                'bio': 'Enfocada en restauración de edificios históricos y diseño de espacios culturales.'
-            }
         ]
 
         users['arquitectos'] = []

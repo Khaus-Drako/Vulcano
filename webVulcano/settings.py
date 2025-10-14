@@ -178,21 +178,21 @@ STORAGES = {
 # ============================================================================
 # CLOUDINARY - Archivos Media
 # ============================================================================
-CLOUDINARY_URL = config('CLOUDINARY_URL', default='cloudinary://116387575249446:yLl0BoKXUvLJQ__hH1sqoq7yuMs@dmsllccgd')
+CLOUDINARY_URL = config('CLOUDINARY_URL', default='')
 
 if CLOUDINARY_URL:
     import cloudinary
     import cloudinary.uploader
     import cloudinary.api
-    
-    # Configurar Cloudinary
-    cloudinary.config(cloudinary_url=CLOUDINARY_URL)
-    
+
+    # Configurar Cloudinary (lee CLOUDINARY_URL automáticamente)
+    cloudinary.config(secure=True)
+
     # Storage backend
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    
+
     MEDIA_URL = '/media/'
-    
+
     print("✅ Cloudinary configured successfully")
 else:
     # Fallback local
