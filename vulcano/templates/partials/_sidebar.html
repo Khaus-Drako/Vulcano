@@ -38,8 +38,8 @@
         {% if user.is_authenticated %}
             <div class="nav-item">
                 <a href="{% url 'vulcano:dashboard' %}" 
-                   class="nav-link-dashboard {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                   {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>
+                   class="nav-link-dashboard {% if request.resolver_match.url_name in 'dashboard,portal_admin,portal_arquitecto,portal_cliente' %}active{% endif %}"
+                   {% if request.resolver_match.url_name in 'dashboard,portal_admin,portal_arquitecto,portal_cliente' %}aria-current="page"{% endif %}>
                     <span class="nav-icon"><i class="bi bi-grid" aria-hidden="true"></i></span>
                     <span class="nav-text">Dashboard</span>
                 </a>

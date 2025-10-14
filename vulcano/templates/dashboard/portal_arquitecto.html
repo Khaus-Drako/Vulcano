@@ -3,11 +3,11 @@
 
 {% block title %}Dashboard Arquitecto - IHAMN{% endblock %}
 
+{% block body_class %}has-sidebar{% endblock %}
+
 {% block content %}
-<div class="dashboard-wrapper portal-arquitecto">
-    
-    <!-- Main Content -->
-    <div class="dashboard-main">
+<div class="portal-arquitecto">
+    <!-- Content -->
 
         <!-- Header -->
         <div class="dashboard-header">
@@ -92,13 +92,6 @@
                     <div class="quick-action-title">Crear Proyecto</div>
                 </div>
                 
-                <div class="quick-action-card" onclick="window.location='{% url 'vulcano:inbox' %}'">
-                    <div class="quick-action-icon">
-                        <i class="bi bi-envelope"></i>
-                    </div>
-                    <div class="quick-action-title">Ver Mensajes</div>
-                </div>
-                
                 <div class="quick-action-card" onclick="window.location='{% url 'vulcano:profile' %}'">
                     <div class="quick-action-icon">
                         <i class="bi bi-person-gear"></i>
@@ -111,6 +104,14 @@
                         <i class="bi bi-grid-3x3"></i>
                     </div>
                     <div class="quick-action-title">Ver Portafolio</div>
+                </div>
+                
+                <div class="quick-action-card" onclick="#">
+                <!-- <div class="quick-action-card" onclick="window.location='{% url 'vulcano:inbox' %}'">-->
+                    <div class="quick-action-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div class="quick-action-title">Ver Mensajes</div>
                 </div>
             </div>
         </div>
@@ -222,6 +223,31 @@
                             </span>
                             {% endif %}
                         </div>
+                        {% if project.clients.exists %}
+                        <div class="dropdown mb-2">
+                            <button class="btn btn-sm btn-success dropdown-toggle" 
+                                    type="button" 
+                                    id="clientDropdown{{ project.id }}" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false">
+                                <i class="bi bi-whatsapp me-1"></i> Contactar
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="clientDropdown{{ project.id }}">
+                                {% for client in project.clients.all %}
+                                    {% if client.profile.phone %}
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="https://wa.me/{{ client.profile.phone|cut:' '|cut:'+'|cut:'-' }}?text=Hola%20{{ client.get_full_name|default:client.username|urlencode }},%20sobre%20el%20proyecto%20%22{{ project.title|urlencode }}%22%20quisiera%20comentarte:"
+                                           target="_blank"
+                                           rel="noopener noreferrer">
+                                            {{ client.get_full_name }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                         <div class="btn-group btn-group-sm">
                             <a href="{% url 'vulcano:project_detail' project.slug %}" 
                                class="btn btn-outline-primary"
@@ -294,55 +320,5 @@
             </div>
             {% endif %}
         </div>
-        
-        <!-- Recent Messages -->
-        <div class="dashboard-section">
-            <div class="section-header-dash">
-                <h2 class="section-title-dash">
-                    <i class="bi bi-envelope me-2"></i> Mensajes Recientes
-                </h2>
-                <a href="{% url 'vulcano:inbox' %}" class="section-action">
-                    Ver todos <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-            
-            {% if recent_messages %}
-            <div class="list-group">
-                {% for message in recent_messages %}
-                <a href="{% url 'vulcano:message_detail' message.id %}" 
-                   class="list-group-item list-group-item-action {% if not message.is_read %}fw-bold{% endif %}">
-                    <div class="d-flex w-100 justify-content-between align-items-start">
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                {% if not message.is_read %}
-                                <span class="badge bg-primary">Nuevo</span>
-                                {% endif %}
-                                <strong>{{ message.sender.get_full_name|default:message.sender.username }}</strong>
-                            </div>
-                            <h6 class="mb-1">{{ message.subject }}</h6>
-                            <p class="mb-1 text-muted small">{{ message.body|truncatewords:15 }}</p>
-                            {% if message.project %}
-                            <small class="text-muted">
-                                <i class="bi bi-building"></i> {{ message.project.title|truncatewords:5 }}
-                            </small>
-                            {% endif %}
-                        </div>
-                        <small class="text-muted text-nowrap ms-3">
-                            {{ message.created_at|timesince }} ago
-                        </small>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state-dash">
-                <div class="empty-icon-dash">
-                    <i class="bi bi-envelope"></i>
-                </div>
-                <h3 class="empty-title-dash">No hay mensajes</h3>
-            </div>
-            {% endif %}
-        </div>
-    </div>
 </div>
 {% endblock %}

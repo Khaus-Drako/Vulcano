@@ -250,14 +250,19 @@ def dashboard(request):
     """
     try:
         user_profile = request.user.profile
+        logger.info(f"Dashboard - Usuario: {request.user.username}, Rol: {user_profile.role}")
         
         if user_profile.is_admin() or user_profile.role == 'admin':
-            return render(request, 'dashboard/portal_admin.html')
+            logger.info("Redirigiendo a portal_admin")
+            return redirect('vulcano:portal_admin')
         elif user_profile.is_arquitecto():
-            return render(request, 'dashboard/portal_arquitecto.html')
+            logger.info("Redirigiendo a portal_arquitecto")
+            return redirect('vulcano:portal_arquitecto')
         elif user_profile.is_cliente():
-            return render(request, 'dashboard/portal_cliente.html')
+            logger.info("Redirigiendo a portal_cliente")
+            return redirect('vulcano:portal_cliente')
         
+        logger.warning(f"Rol de usuario no reconocido: {user_profile.role}")
         messages.error(request, 'Rol de usuario no reconocido.')
         return redirect('vulcano:home')
     except Exception as e:
@@ -316,28 +321,46 @@ def portal_arquitecto(request):
     """
     Portal de arquitecto con gestión de proyectos propios.
     """
-    stats = get_user_statistics(request.user)
+    # Debug log
+    logger.info(f"Usuario {request.user.username} accediendo al portal de arquitecto")
     
-    # Proyectos del arquitecto
+    # Obtener estadísticas del usuario
+    stats = get_user_statistics(request.user)
+    logger.info(f"Estadísticas: {stats}")
+    
+    # Obtener proyectos del arquitecto
     my_projects = Project.objects.filter(
         arquitecto=request.user
-    ).prefetch_related('images').order_by('-created_at')
+    ).select_related('arquitecto').prefetch_related('images', 'clients').order_by('-created_at')
+    
+    logger.info(f"Total de proyectos encontrados: {my_projects.count()}")
     
     # Filtros
-    status_filter = request.GET.get('status', '')
-    if status_filter:
-        my_projects = my_projects.filter(status=status_filter)
+    filter_type = request.GET.get('filter', 'all')
+    if filter_type == 'published':
+        my_projects = my_projects.filter(is_published=True)
+    elif filter_type == 'draft':
+        my_projects = my_projects.filter(is_published=False)
+    elif filter_type == 'in_progress':
+        my_projects = my_projects.filter(status='in_progress')
+    elif filter_type == 'completed':
+        my_projects = my_projects.filter(status='completed')
+    
+    # Conteos para las pestañas
+    published_count = my_projects.filter(is_published=True).count()
+    draft_count = my_projects.filter(is_published=False).count()
+    in_progress_count = my_projects.filter(status='in_progress').count()
+    completed_count = my_projects.filter(status='completed').count()
     
     # Paginación
-    paginator = Paginator(my_projects, 9)
+    paginator = Paginator(my_projects, 9)  # 9 proyectos por página
     page = request.GET.get('page', 1)
-    
     try:
-        projects_page = paginator.page(page)
+        projects = paginator.page(page)
     except PageNotAnInteger:
-        projects_page = paginator.page(1)
+        projects = paginator.page(1)
     except EmptyPage:
-        projects_page = paginator.page(paginator.num_pages)
+        projects = paginator.page(paginator.num_pages)
     
     # Mensajes recientes
     recent_messages = Message.objects.filter(
@@ -345,11 +368,21 @@ def portal_arquitecto(request):
     ).select_related('sender', 'recipient').order_by('-created_at')[:5]
     
     context = {
-        'stats': stats,
-        'projects': projects_page,
+        'projects': projects,  # La variable de la paginación
         'recent_messages': recent_messages,
-        'status_filter': status_filter,
+        'filter': filter_type,
+        'published_projects': published_count,
+        'draft_projects': draft_count,
+        'in_progress_projects': in_progress_count,
+        'completed_projects': completed_count,
+        'total_projects': stats['total_projects'],
+        'total_views': stats['total_views'],
+        'total_clients': stats['total_clients'],
+        'unread_messages': stats.get('unread_messages', 0),
+        'new_projects_month': stats.get('new_projects_month', 0)
     }
+    
+    logger.info(f"Contexto final preparado: {context}")
     
     return render(request, 'dashboard/portal_arquitecto.html', context)
 
@@ -377,9 +410,18 @@ def portal_cliente(request):
         Q(sender=request.user) | Q(recipient=request.user)
     ).select_related('sender', 'recipient').order_by('-created_at')[:5]
     
+    # Conteos para estadísticas
+    my_projects_count = assigned_projects.count()
+    my_architects_count = assigned_projects.values('arquitecto').distinct().count()
+    favorites_count = assigned_projects.filter(is_featured=True).count()
+    
     context = {
         'stats': stats,
-        'projects': assigned_projects,
+        'my_projects': assigned_projects,  # Cambiado a my_projects para coincidir con el template
+        'my_projects_count': my_projects_count,
+        'my_architects_count': my_architects_count,
+        'favorites_count': favorites_count,
+        'unread_messages': stats.get('unread_messages', 0),
         'recent_messages': recent_messages,
         'status_filter': status_filter,
     }

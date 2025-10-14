@@ -93,26 +93,27 @@ def get_user_statistics(user):
                 ).count(),
             })
         elif profile.is_arquitecto():
+            # Obtener todos los proyectos del arquitecto
+            projects = Project.objects.filter(arquitecto=user)
+            
+            # Calcular estadísticas
             stats.update({
-                'my_projects': Project.objects.filter(arquitecto=user).count(),
-                'published_projects': Project.objects.filter(
-                    arquitecto=user,
-                    is_published=True
-                ).count(),
-                'draft_projects': Project.objects.filter(
-                    arquitecto=user,
-                    status='draft'
-                ).count(),
-                'total_clients': Project.objects.filter(
-                    arquitecto=user
-                ).values('clients').distinct().count(),
+                'total_projects': projects.count(),
+                'published_projects': projects.filter(is_published=True).count(),
+                'draft_projects': projects.filter(is_published=False).count(),
+                'in_progress_projects': projects.filter(status='in_progress').count(),
+                'completed_projects': projects.filter(status='completed').count(),
+                'total_clients': projects.values('clients').distinct().count(),
                 'unread_messages': Message.objects.filter(
                     recipient=user,
                     is_read=False
                 ).count(),
-                'total_views': Project.objects.filter(
-                    arquitecto=user
-                ).aggregate(total=Count('views_count'))['total'] or 0,
+                'total_views': projects.aggregate(
+                    total=Count('views_count')
+                )['total'] or 0,
+                'new_projects_month': projects.filter(
+                    created_at__gte=timezone.now() - timezone.timedelta(days=30)
+                ).count()
             })
         elif profile.is_cliente():
             stats.update({
