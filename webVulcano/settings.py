@@ -165,19 +165,7 @@ if DEBUG:
         BASE_DIR / 'vulcano' / 'static',
     ]
 
-# WhiteNoise configuration
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
-
-# ============================================================================
-# CLOUDINARY - Archivos Media
-# ============================================================================
+# WhiteNoise y Cloudinary configuration
 CLOUDINARY_URL = config('CLOUDINARY_URL', default='')
 
 if CLOUDINARY_URL:
@@ -185,19 +173,47 @@ if CLOUDINARY_URL:
     import cloudinary.uploader
     import cloudinary.api
 
-    # Configurar Cloudinary (lee CLOUDINARY_URL automáticamente)
+    # Configurar Cloudinary
     cloudinary.config(secure=True)
-
-    # Storage backend
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    
+    # Storage configuration
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
     MEDIA_URL = '/media/'
-
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': cloudinary.config().cloud_name,
+        'API_KEY': cloudinary.config().api_key,
+        'API_SECRET': cloudinary.config().api_secret,
+        'SECURE': True,
+        'MEDIA_TAG': 'media',
+        'INVALID_VIDEO_ERROR_MESSAGE': 'Please upload a valid video file.',
+        'EXCLUDE_DELETE_ORPHANED_MEDIA_PATHS': [],
+        'STATIC_TAG': 'static',
+        'MAGIC_FILE_PATH': 'magic',
+        'STATIC_IMAGES_EXTENSIONS': ['jpg', 'jpe', 'jpeg', 'jpc', 'jp2', 'j2k', 'wdp', 'jxr',
+                                   'hdp', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'ico'],
+    }
     print("✅ Cloudinary configured successfully")
 else:
-    # Fallback local
+    # Fallback para desarrollo local
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+    print("⚠️  Using local media storage")
     print("⚠️  Using local media storage")
 
 # ============================================================================

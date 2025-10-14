@@ -26,7 +26,8 @@ echo "  Running database migrations..."
 python manage.py migrate --noinput
 
 echo ""
-echo "  Load data example..."
+echo "  Load data example with images..."
+python manage.py flush --no-input
 python manage.py load_sample_data --clear
 
 echo ""
