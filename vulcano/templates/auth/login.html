@@ -1,19 +1,14 @@
-{% extends 'base.html' %}
+{% extends 'auth/base_auth.html' %}
 {% load static %}
 
-{% block title %}Iniciar Sesión - Vulcano{% endblock %}
-
-{% block body_class %}auth-page{% endblock %}
-
-{% block navbar %}{% endblock %}
-{% block footer %}{% endblock %}
+{% block title %}Iniciar Sesión - IHMAN{% endblock %}
 
 {% block content %}
 <div class="auth-wrapper">
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">Vulcano</div>
+                <div class="auth-logo">IHMAN</div>
                 <h1 class="auth-title">Bienvenido de nuevo</h1>
                 <p class="auth-subtitle">Ingresa a tu cuenta para continuar</p>
             </div>
@@ -29,7 +24,7 @@
             </div>
             {% endif %}
             
-            <form method="post" class="auth-form" data-validate="true" novalidate>
+            <form method="post" class="auth-form" novalidate>
                 {% csrf_token %}
                 
                 <div class="form-group-auth">
@@ -63,7 +58,7 @@
                                class="form-input-auth {% if form.password.errors %}is-invalid{% endif %}"
                                placeholder="Tu contraseña"
                                required>
-                        <button type="button" class="password-toggle" tabindex="-1" onclick="togglePassword(this)">
+                        <button type="button" class="password-toggle" tabindex="-1" aria-label="Mostrar/ocultar contraseña">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
@@ -75,9 +70,9 @@
                     {% endif %}
                 </div>
                 
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="form-check-auth">
-                        <input type="checkbox" class="form-check-input-auth" id="remember">
+                        <input type="checkbox" class="form-check-input-auth" id="remember" name="remember">
                         <label class="form-check-label-auth" for="remember">
                             Recordarme
                         </label>
@@ -105,21 +100,32 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-function togglePassword(button) {
-    const input = button.parentElement.querySelector('input');
-    const icon = button.querySelector('i');
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle para mostrar/ocultar contraseña
+    const passwordToggles = document.querySelectorAll('.password-toggle');
     
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('bi-eye');
-        icon.classList.add('bi-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('bi-eye-slash');
-        icon.classList.add('bi-eye');
-    }
-}
+    passwordToggles.forEach(function(button) {
+        button.addEventListener('click', function() {
+            const input = this.parentElement.querySelector('input');
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+                this.setAttribute('aria-label', 'Ocultar contraseña');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+                this.setAttribute('aria-label', 'Mostrar contraseña');
+            }
+        });
+    });
+});
 </script>
 {% endblock %}

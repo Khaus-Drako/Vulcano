@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ project.title }} - Vulcano{% endblock %}
+{% block title %}{{ project.title }} - IHMAN{% endblock %}
 
 {% block meta_description %}{{ project.short_description }}{% endblock %}
-{% block og_title %}{{ project.title }} - Vulcano{% endblock %}
+{% block og_title %}{{ project.title }} - IHMAN{% endblock %}
 {% block og_description %}{{ project.short_description }}{% endblock %}
 {% block og_image %}{% if project.get_main_image %}{{ request.scheme }}://{{ request.get_host }}{{ project.get_main_image.image.url }}{% endif %}{% endblock %}
 

@@ -1,14 +1,18 @@
 /**
  * VULCANO - Gestión de Tema Claro/Oscuro
- * Persistencia en localStorage y sincronización
+ * Sincronizado con Bootstrap 5 y preferencias del sistema
  */
 
 'use strict';
 
 const ThemeManager = {
   storageKey: 'vulcano-theme',
+  initialized: false,
   
   init() {
+    if (this.initialized) return;
+    this.initialized = true;
+    
     this.loadTheme();
     this.setupToggle();
     this.watchSystemPreference();
@@ -22,24 +26,44 @@ const ThemeManager = {
     const savedTheme = localStorage.getItem(this.storageKey);
     
     if (savedTheme) {
-      this.setTheme(savedTheme);
+      this.setTheme(savedTheme, false);
     } else {
-      // Detectar preferencia del sistema
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.setTheme(prefersDark ? 'dark' : 'light');
+      this.setTheme(prefersDark ? 'dark' : 'light', false);
     }
   },
   
   /**
    * Establece el tema activo
+   * @param {string} theme - 'light' o 'dark'
+   * @param {boolean} animate - Si se debe animar la transición
    */
-  setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(this.storageKey, theme);
-    this.updateToggleButton(theme);
+  setTheme(theme, animate = true) {
+    const root = document.documentElement;
+    const validTheme = theme === 'dark' ? 'dark' : 'light';
     
-    // Disparar evento personalizado
-    window.dispatchEvent(new CustomEvent('themeChange', { detail: { theme } }));
+    // Aplicar a HTML
+    root.setAttribute('data-theme', validTheme);
+    root.setAttribute('data-bs-theme', validTheme); // Bootstrap 5.3+
+    
+    // Guardar preferencia
+    localStorage.setItem(this.storageKey, validTheme);
+    
+    // Actualizar UI
+    this.updateToggleButton(validTheme);
+    
+    // Animación suave
+    if (animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+      setTimeout(() => {
+        document.body.style.transition = '';
+      }, 300);
+    }
+    
+    // Evento personalizado
+    window.dispatchEvent(new CustomEvent('themeChange', { 
+      detail: { theme: validTheme } 
+    }));
   },
   
   /**
@@ -48,13 +72,7 @@ const ThemeManager = {
   toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    this.setTheme(newTheme);
-    
-    // Animación suave
-    document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-    setTimeout(() => {
-      document.body.style.transition = '';
-    }, 300);
+    this.setTheme(newTheme, true);
   },
   
   /**
@@ -64,15 +82,25 @@ const ThemeManager = {
     const toggleButtons = document.querySelectorAll('.theme-toggle, [data-theme-toggle]');
     
     toggleButtons.forEach(button => {
+      // Evitar múltiples listeners
+      if (button.dataset.themeListenerAdded) return;
+      button.dataset.themeListenerAdded = 'true';
+      
       button.addEventListener('click', (e) => {
         e.preventDefault();
         this.toggleTheme();
         
-        // Animación del botón
-        button.style.transform = 'rotate(360deg)';
-        setTimeout(() => {
-          button.style.transform = '';
-        }, 300);
+        // Animación del botón (solo si no hay preferencia de movimiento reducido)
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          button.style.transition = 'transform 0.3s ease';
+          button.style.transform = 'rotate(360deg)';
+          setTimeout(() => {
+            button.style.transform = '';
+            setTimeout(() => {
+              button.style.transition = '';
+            }, 300);
+          }, 300);
+        }
       });
     });
   },
@@ -82,19 +110,18 @@ const ThemeManager = {
    */
   updateToggleButton(theme) {
     const buttons = document.querySelectorAll('.theme-toggle, [data-theme-toggle]');
+    const isDark = theme === 'dark';
     
     buttons.forEach(button => {
       const icon = button.querySelector('.theme-icon');
       if (icon) {
-        icon.textContent = theme === 'light' ? '🌙' : '☀️';
+        icon.textContent = isDark ? '☀️' : '🌙';
       }
       
-      button.setAttribute('aria-label', 
-        theme === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'
-      );
-      button.setAttribute('title',
-        theme === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'
-      );
+      const label = isDark ? 'Activar modo claro' : 'Activar modo oscuro';
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
+      button.setAttribute('aria-pressed', String(isDark));
     });
   },
   
@@ -104,13 +131,20 @@ const ThemeManager = {
   watchSystemPreference() {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    mediaQuery.addEventListener('change', (e) => {
-      // Solo cambiar si no hay preferencia guardada explícitamente
+    // Listener moderno
+    const handleChange = (e) => {
       const hasSavedPreference = localStorage.getItem(this.storageKey);
       if (!hasSavedPreference) {
-        this.setTheme(e.matches ? 'dark' : 'light');
+        this.setTheme(e.matches ? 'dark' : 'light', true);
       }
-    });
+    };
+    
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else {
+      // Fallback para navegadores antiguos
+      mediaQuery.addListener(handleChange);
+    }
   },
   
   /**
@@ -121,11 +155,11 @@ const ThemeManager = {
   },
   
   /**
-   * Fuerza un tema específico
+   * Fuerza un tema específico (útil para preview)
    */
   forceTheme(theme) {
     if (theme === 'light' || theme === 'dark') {
-      this.setTheme(theme);
+      this.setTheme(theme, true);
     }
   },
   
@@ -135,12 +169,30 @@ const ThemeManager = {
   resetToSystemPreference() {
     localStorage.removeItem(this.storageKey);
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    this.setTheme(prefersDark ? 'dark' : 'light');
+    this.setTheme(prefersDark ? 'dark' : 'light', true);
   }
 };
 
-// Inicializar inmediatamente para evitar flash
-ThemeManager.init();
+// Inicialización temprana para evitar flash
+(function() {
+  const savedTheme = localStorage.getItem('vulcano-theme');
+  if (savedTheme) {
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.documentElement.setAttribute('data-bs-theme', savedTheme);
+  } else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = prefersDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-bs-theme', theme);
+  }
+})();
 
-// Exportar para uso global
+// Inicializar cuando esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => ThemeManager.init());
+} else {
+  ThemeManager.init();
+}
+
+// Exportar
 window.ThemeManager = ThemeManager;

@@ -1,6 +1,6 @@
 /**
  * VULCANO - Lightbox para Galería de Imágenes
- * Visualización modal de imágenes con navegación
+ * Visualización modal con navegación y accesibilidad
  */
 
 'use strict';
@@ -9,8 +9,12 @@ const Lightbox = {
   currentIndex: 0,
   images: [],
   overlay: null,
+  initialized: false,
   
   init() {
+    if (this.initialized) return;
+    this.initialized = true;
+    
     this.createOverlay();
     this.setupTriggers();
     this.setupKeyboardNavigation();
@@ -23,13 +27,23 @@ const Lightbox = {
   createOverlay() {
     this.overlay = document.createElement('div');
     this.overlay.className = 'lightbox-overlay';
+    this.overlay.setAttribute('role', 'dialog');
+    this.overlay.setAttribute('aria-modal', 'true');
+    this.overlay.setAttribute('aria-label', 'Galería de imágenes');
+    
     this.overlay.innerHTML = `
       <div class="lightbox-content">
         <img src="" alt="" class="lightbox-image">
-        <button class="lightbox-close" aria-label="Cerrar">&times;</button>
-        <button class="lightbox-nav lightbox-prev" aria-label="Anterior">‹</button>
-        <button class="lightbox-nav lightbox-next" aria-label="Siguiente">›</button>
-        <div class="lightbox-counter"></div>
+        <button class="lightbox-close" aria-label="Cerrar galería">
+          <i class="bi bi-x" aria-hidden="true"></i>
+        </button>
+        <button class="lightbox-nav lightbox-prev" aria-label="Imagen anterior">
+          <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <button class="lightbox-nav lightbox-next" aria-label="Imagen siguiente">
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="lightbox-counter" aria-live="polite" aria-atomic="true"></div>
       </div>
     `;
     
@@ -53,11 +67,28 @@ const Lightbox = {
    */
   setupTriggers() {
     document.querySelectorAll('[data-lightbox]').forEach((trigger, index) => {
+      if (trigger.dataset.lightboxAdded) return;
+      trigger.dataset.lightboxAdded = 'true';
+      
       trigger.addEventListener('click', (e) => {
         e.preventDefault();
         const gallery = trigger.dataset.lightbox || 'default';
         this.open(gallery, index);
       });
+      
+      // Accesibilidad: permitir Enter/Space
+      if (trigger.tagName !== 'A' && trigger.tagName !== 'BUTTON') {
+        trigger.setAttribute('role', 'button');
+        trigger.setAttribute('tabindex', '0');
+        
+        trigger.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const gallery = trigger.dataset.lightbox || 'default';
+            this.open(gallery, index);
+          }
+        });
+      }
     });
   },
   
@@ -77,16 +108,32 @@ const Lightbox = {
     
     this.currentIndex = startIndex;
     this.updateImage();
+    
+    // Mostrar overlay
     this.overlay.classList.add('active');
+    this.overlay.removeAttribute('aria-hidden');
+    
+    // Bloquear scroll del body
     document.body.style.overflow = 'hidden';
     
+    // Guardar el elemento con foco para restaurarlo al cerrar
+    this.previousFocus = document.activeElement;
+    
+    // Enfocar el botón de cerrar
+    setTimeout(() => {
+      this.overlay.querySelector('.lightbox-close').focus();
+    }, 100);
+    
     // Ocultar navegación si solo hay una imagen
+    const prevBtn = this.overlay.querySelector('.lightbox-prev');
+    const nextBtn = this.overlay.querySelector('.lightbox-next');
+    
     if (this.images.length === 1) {
-      this.overlay.querySelector('.lightbox-prev').style.display = 'none';
-      this.overlay.querySelector('.lightbox-next').style.display = 'none';
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
     } else {
-      this.overlay.querySelector('.lightbox-prev').style.display = 'flex';
-      this.overlay.querySelector('.lightbox-next').style.display = 'flex';
+      prevBtn.style.display = 'flex';
+      nextBtn.style.display = 'flex';
     }
   },
   
@@ -94,14 +141,24 @@ const Lightbox = {
    * Cierra el lightbox
    */
   close() {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
     this.overlay.classList.remove('active');
+    this.overlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     
+    // Restaurar foco
+    if (this.previousFocus) {
+      this.previousFocus.focus();
+      this.previousFocus = null;
+    }
+    
     // Limpiar después de la animación
+    const cleanupDelay = reducedMotion ? 0 : 300;
     setTimeout(() => {
       this.currentIndex = 0;
       this.images = [];
-    }, 300);
+    }, cleanupDelay);
   },
   
   /**
@@ -128,21 +185,32 @@ const Lightbox = {
     const imgElement = this.overlay.querySelector('.lightbox-image');
     const counter = this.overlay.querySelector('.lightbox-counter');
     
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
     // Fade out
-    imgElement.style.opacity = '0';
+    if (!reducedMotion) {
+      imgElement.style.opacity = '0';
+    }
+    
+    const transitionDelay = reducedMotion ? 0 : 150;
     
     setTimeout(() => {
       imgElement.src = image.src;
-      imgElement.alt = image.alt;
+      imgElement.alt = image.alt || `Imagen ${this.currentIndex + 1} de ${this.images.length}`;
       
       // Fade in cuando se carga
       imgElement.onload = () => {
-        imgElement.style.opacity = '1';
+        if (!reducedMotion) {
+          imgElement.style.opacity = '1';
+        }
       };
       
       // Actualizar contador
       counter.textContent = `${this.currentIndex + 1} / ${this.images.length}`;
-    }, 150);
+      
+      // Anunciar a lectores de pantalla
+      counter.setAttribute('aria-label', `Imagen ${this.currentIndex + 1} de ${this.images.length}`);
+    }, transitionDelay);
   },
   
   /**
@@ -154,40 +222,59 @@ const Lightbox = {
       
       switch(e.key) {
         case 'Escape':
+          e.preventDefault();
           this.close();
           break;
         case 'ArrowLeft':
+          e.preventDefault();
           this.prev();
           break;
         case 'ArrowRight':
+          e.preventDefault();
           this.next();
+          break;
+        case 'Home':
+          e.preventDefault();
+          this.currentIndex = 0;
+          this.updateImage();
+          break;
+        case 'End':
+          e.preventDefault();
+          this.currentIndex = this.images.length - 1;
+          this.updateImage();
           break;
       }
     });
   },
   
   /**
-   * Abre lightbox con una imagen específica
+   * Abre lightbox con una imagen específica (API pública)
    */
   openImage(src, alt = '', caption = '') {
     this.images = [{ src, alt, caption }];
     this.currentIndex = 0;
     this.updateImage();
     this.overlay.classList.add('active');
+    this.overlay.removeAttribute('aria-hidden');
     document.body.style.overflow = 'hidden';
     
     // Ocultar navegación
     this.overlay.querySelector('.lightbox-prev').style.display = 'none';
     this.overlay.querySelector('.lightbox-next').style.display = 'none';
+    
+    // Guardar y enfocar
+    this.previousFocus = document.activeElement;
+    setTimeout(() => {
+      this.overlay.querySelector('.lightbox-close').focus();
+    }, 100);
   }
 };
 
-// Inicializar cuando el DOM esté listo
+// Inicializar
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => Lightbox.init());
 } else {
   Lightbox.init();
 }
 
-// Exportar para uso global
 window.Lightbox = Lightbox;

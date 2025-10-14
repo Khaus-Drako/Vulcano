@@ -1,20 +1,27 @@
 /**
  * VULCANO - JavaScript Principal
- * Funcionalidades globales, utilidades y manejo de interacciones
+ * Funcionalidades globales (sin manejar sidebar, ya lo hace sidebar.js)
  */
 
 'use strict';
 
-// ========== CONFIGURACIÓN GLOBAL ==========
 const VulcanoApp = {
   config: {
     animationDuration: 300,
     debounceDelay: 300,
     lazyLoadOffset: 200,
+    toastDuration: 5000,
   },
+  initialized: false,
   
   init() {
-    this.setupNavigation();
+    if (this.initialized) return;
+    this.initialized = true;
+    
+    // Quitar clase no-js
+    document.documentElement.classList.remove('no-js');
+    document.documentElement.classList.add('js');
+    
     this.setupForms();
     this.setupAlerts();
     this.setupLazyLoading();
@@ -22,56 +29,25 @@ const VulcanoApp = {
     this.setupSmoothScroll();
     this.setupImagePreview();
     this.setupConfirmDialogs();
-    this.setupAjaxActions();
+    this.setupScrollToTop();
+    this.setupActiveLinks();
+    
     console.log('✅ Vulcano App initialized');
   }
 };
 
-// ========== NAVEGACIÓN ==========
-VulcanoApp.setupNavigation = function() {
-  // Toggle sidebar en móvil
-  const sidebarToggle = document.querySelector('.sidebar-toggle');
-  const sidebar = document.querySelector('.dashboard-sidebar');
-  const mainContent = document.querySelector('.dashboard-main');
-  
-  if (sidebarToggle && sidebar) {
-    sidebarToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('active');
-      mainContent?.classList.toggle('expanded');
-    });
-    
-    // Cerrar sidebar al hacer clic fuera en móvil
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 1024 && 
-          !sidebar.contains(e.target) && 
-          !sidebarToggle.contains(e.target) &&
-          sidebar.classList.contains('active')) {
-        sidebar.classList.remove('active');
-        mainContent?.classList.remove('expanded');
-      }
-    });
-  }
-  
-  // Marcar enlace activo en navegación
-  const currentPath = window.location.pathname;
-  document.querySelectorAll('.nav-link-dashboard, .nav-link').forEach(link => {
-    if (link.getAttribute('href') === currentPath) {
-      link.classList.add('active');
-    }
-  });
-};
-
 // ========== FORMULARIOS ==========
 VulcanoApp.setupForms = function() {
-  // Validación en tiempo real
   const forms = document.querySelectorAll('form[data-validate="true"]');
+  
   forms.forEach(form => {
-    const inputs = form.querySelectorAll('input, textarea, select');
+    if (form.dataset.validationAdded) return;
+    form.dataset.validationAdded = 'true';
+    
+    const inputs = form.querySelectorAll('input:not([type="hidden"]), textarea, select');
     
     inputs.forEach(input => {
-      input.addEventListener('blur', () => {
-        this.validateField(input);
-      });
+      input.addEventListener('blur', () => this.validateField(input));
       
       input.addEventListener('input', () => {
         if (input.classList.contains('is-invalid')) {
@@ -90,24 +66,36 @@ VulcanoApp.setupForms = function() {
       
       if (!isValid) {
         e.preventDefault();
+        const firstInvalid = form.querySelector('.is-invalid');
+        firstInvalid?.focus();
         this.showToast('Por favor, corrige los errores en el formulario', 'error');
-      } else {
-        // Deshabilitar botón de envío para evitar doble submit
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) {
-          submitBtn.disabled = true;
-          submitBtn.classList.add('loading');
-        }
+        return false;
+      }
+      
+      // Deshabilitar botón submit
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn && !submitBtn.disabled) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+        
+        // Re-habilitar después de 3 segundos (fallback)
+        setTimeout(() => {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('loading');
+        }, 3000);
       }
     });
   });
   
-  // Auto-resize de textareas
+  // Auto-resize textareas
   document.querySelectorAll('textarea[data-autoresize="true"]').forEach(textarea => {
-    textarea.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = (this.scrollHeight) + 'px';
-    });
+    const resize = () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    };
+    
+    textarea.addEventListener('input', resize);
+    resize(); // Inicial
   });
 };
 
@@ -118,30 +106,22 @@ VulcanoApp.validateField = function(field) {
   let isValid = true;
   let errorMessage = '';
   
-  // Validar campo requerido
   if (required && !value) {
     isValid = false;
     errorMessage = 'Este campo es obligatorio';
-  }
-  
-  // Validar email
-  if (type === 'email' && value) {
+  } else if (type === 'email' && value) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(value)) {
       isValid = false;
-      errorMessage = 'Ingresa un email válido';
+      errorMessage = 'Ingresa un correo válido';
     }
-  }
-  
-  // Validar longitud mínima
-  const minLength = field.getAttribute('minlength');
-  if (minLength && value.length < parseInt(minLength)) {
-    isValid = false;
-    errorMessage = `Mínimo ${minLength} caracteres`;
-  }
-  
-  // Validar contraseñas coincidentes
-  if (field.name === 'password2' || field.name === 'confirm_password') {
+  } else if (field.hasAttribute('minlength') && value) {
+    const minLength = parseInt(field.getAttribute('minlength'));
+    if (value.length < minLength) {
+      isValid = false;
+      errorMessage = `Mínimo ${minLength} caracteres`;
+    }
+  } else if ((field.name === 'password2' || field.name === 'confirm_password') && value) {
     const password1 = document.querySelector('input[name="password1"], input[name="password"]');
     if (password1 && value !== password1.value) {
       isValid = false;
@@ -149,7 +129,6 @@ VulcanoApp.validateField = function(field) {
     }
   }
   
-  // Aplicar clases de validación
   if (isValid) {
     field.classList.remove('is-invalid');
     field.classList.add('is-valid');
@@ -181,83 +160,86 @@ VulcanoApp.hideFieldError = function(field) {
   }
 };
 
-// ========== ALERTAS Y TOASTS ==========
+// ========== ALERTAS ==========
 VulcanoApp.setupAlerts = function() {
-  // Auto-cerrar alertas después de 5 segundos
   document.querySelectorAll('.alert[data-auto-dismiss="true"]').forEach(alert => {
-    setTimeout(() => {
+    if (alert.dataset.dismissTimerSet) return;
+    alert.dataset.dismissTimerSet = 'true';
+    
+    const dismissAlert = () => {
       alert.style.opacity = '0';
       setTimeout(() => alert.remove(), 300);
-    }, 5000);
-  });
-  
-  // Botones de cerrar alertas
-  document.querySelectorAll('.alert .btn-close').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const alert = this.closest('.alert');
-      alert.style.opacity = '0';
-      setTimeout(() => alert.remove(), 300);
-    });
+    };
+    
+    // Auto-cerrar después de 5 segundos si no está en hover/focus
+    const timer = setTimeout(() => {
+      if (!alert.matches(':hover, :focus-within')) {
+        dismissAlert();
+      }
+    }, this.config.toastDuration);
+    
+    // Cancelar si interactúa
+    alert.addEventListener('mouseenter', () => clearTimeout(timer), { once: true });
   });
 };
 
 VulcanoApp.showToast = function(message, type = 'info', duration = 3000) {
   const toast = document.createElement('div');
   toast.className = `toast-notification toast-${type}`;
-  toast.innerHTML = `
-    <div class="toast-content">
-      <span class="toast-icon">${this.getToastIcon(type)}</span>
-      <span class="toast-message">${message}</span>
-      <button class="toast-close">&times;</button>
-    </div>
-  `;
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
   
-  // Estilos inline para el toast
-  Object.assign(toast.style, {
-    position: 'fixed',
-    top: '20px',
-    right: '20px',
-    zIndex: '9999',
-    padding: '16px 24px',
-    borderRadius: '12px',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-    backgroundColor: type === 'success' ? '#10b981' : 
-                     type === 'error' ? '#ef4444' : 
-                     type === 'warning' ? '#f59e0b' : '#3b82f6',
-    color: 'white',
-    fontWeight: '500',
-    animation: 'slideInRight 0.3s ease-out',
-    maxWidth: '400px'
-  });
-  
-  document.body.appendChild(toast);
-  
-  // Cerrar toast
-  const closeToast = () => {
-    toast.style.animation = 'slideOutRight 0.3s ease-out';
-    setTimeout(() => toast.remove(), 300);
-  };
-  
-  toast.querySelector('.toast-close').addEventListener('click', closeToast);
-  
-  if (duration > 0) {
-    setTimeout(closeToast, duration);
-  }
-};
-
-VulcanoApp.getToastIcon = function(type) {
   const icons = {
     success: '✓',
     error: '✕',
     warning: '⚠',
     info: 'ℹ'
   };
-  return icons[type] || icons.info;
+  
+  toast.innerHTML = `
+    <div class="d-flex align-items-center gap-2">
+      <span aria-hidden="true">${icons[type] || icons.info}</span>
+      <span>${message}</span>
+      <button class="btn-close btn-close-white ms-auto" aria-label="Cerrar"></button>
+    </div>
+  `;
+  
+  Object.assign(toast.style, {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    zIndex: '9999',
+    padding: '12px 20px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    backgroundColor: type === 'success' ? '#10b981' : 
+                     type === 'error' ? '#ef4444' : 
+                     type === 'warning' ? '#f59e0b' : '#3b82f6',
+    color: 'white',
+    fontWeight: '500',
+    maxWidth: '400px',
+    animation: 'slideInRight 0.3s ease-out'
+  });
+  
+  document.body.appendChild(toast);
+  
+  const closeToast = () => {
+    toast.style.animation = 'slideOutRight 0.3s ease-out';
+    setTimeout(() => toast.remove(), 300);
+  };
+  
+  toast.querySelector('.btn-close').addEventListener('click', closeToast);
+  
+  if (duration > 0) {
+    setTimeout(closeToast, duration);
+  }
 };
 
-// ========== LAZY LOADING DE IMÁGENES ==========
+// ========== LAZY LOADING ==========
 VulcanoApp.setupLazyLoading = function() {
-  const imageObserver = new IntersectionObserver((entries, observer) => {
+  if (!('IntersectionObserver' in window)) return;
+  
+  const imageObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const img = entry.target;
@@ -267,7 +249,7 @@ VulcanoApp.setupLazyLoading = function() {
           img.src = src;
           img.classList.add('loaded');
           img.removeAttribute('data-src');
-          observer.unobserve(img);
+          imageObserver.unobserve(img);
         }
       }
     });
@@ -275,65 +257,43 @@ VulcanoApp.setupLazyLoading = function() {
     rootMargin: `${this.config.lazyLoadOffset}px`
   });
   
-  document.querySelectorAll('img[data-src]').forEach(img => {
-    imageObserver.observe(img);
-  });
+  document.querySelectorAll('img[data-src]').forEach(img => imageObserver.observe(img));
 };
 
 // ========== TOOLTIPS ==========
 VulcanoApp.setupTooltips = function() {
-  document.querySelectorAll('[data-tooltip]').forEach(element => {
-    element.addEventListener('mouseenter', function(e) {
-      const tooltipText = this.dataset.tooltip;
-      const tooltip = document.createElement('div');
-      tooltip.className = 'tooltip-custom';
-      tooltip.textContent = tooltipText;
-      
-      Object.assign(tooltip.style, {
-        position: 'absolute',
-        background: '#1a1a1a',
-        color: 'white',
-        padding: '8px 12px',
-        borderRadius: '6px',
-        fontSize: '14px',
-        zIndex: '10000',
-        pointerEvents: 'none',
-        whiteSpace: 'nowrap',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-      });
-      
-      document.body.appendChild(tooltip);
-      
-      const rect = this.getBoundingClientRect();
-      tooltip.style.top = (rect.top - tooltip.offsetHeight - 8) + 'px';
-      tooltip.style.left = (rect.left + (rect.width - tooltip.offsetWidth) / 2) + 'px';
-      
-      this.tooltipElement = tooltip;
+  // Inicializar tooltips de Bootstrap si está disponible
+  if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+      new bootstrap.Tooltip(el);
     });
-    
-    element.addEventListener('mouseleave', function() {
-      if (this.tooltipElement) {
-        this.tooltipElement.remove();
-        this.tooltipElement = null;
-      }
-    });
-  });
+  }
 };
 
 // ========== SMOOTH SCROLL ==========
 VulcanoApp.setupSmoothScroll = function() {
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  document.querySelectorAll('a[href^="#"]:not([href="#"])').forEach(anchor => {
+    if (anchor.dataset.smoothScrollAdded) return;
+    anchor.dataset.smoothScrollAdded = 'true';
+    
     anchor.addEventListener('click', function(e) {
-      const href = this.getAttribute('href');
-      if (href === '#') return;
+      const targetId = this.getAttribute('href');
+      const target = document.querySelector(targetId);
       
-      const target = document.querySelector(href);
       if (target) {
         e.preventDefault();
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
         target.scrollIntoView({
-          behavior: 'smooth',
+          behavior: reducedMotion ? 'auto' : 'smooth',
           block: 'start'
         });
+        
+        // Foco accesible
+        if (target.tabIndex < 0) {
+          target.tabIndex = -1;
+        }
+        target.focus();
       }
     });
   });
@@ -344,6 +304,9 @@ VulcanoApp.setupImagePreview = function() {
   const fileInputs = document.querySelectorAll('input[type="file"][data-preview="true"]');
   
   fileInputs.forEach(input => {
+    if (input.dataset.previewAdded) return;
+    input.dataset.previewAdded = 'true';
+    
     input.addEventListener('change', function(e) {
       const files = e.target.files;
       const previewContainer = document.querySelector(this.dataset.previewContainer || '#image-preview');
@@ -358,17 +321,17 @@ VulcanoApp.setupImagePreview = function() {
           
           reader.onload = function(e) {
             const div = document.createElement('div');
-            div.className = 'image-preview-item';
+            div.className = 'image-preview-item position-relative';
             div.innerHTML = `
-              <img src="${e.target.result}" class="image-preview-img" alt="Preview ${index + 1}">
-              <button type="button" class="image-preview-remove" data-index="${index}">
-                <span>&times;</span>
+              <img src="${e.target.result}" class="image-preview-img" alt="Vista previa ${index + 1}">
+              <button type="button" class="image-preview-remove btn btn-danger btn-sm position-absolute top-0 end-0 m-2" 
+                      data-index="${index}" aria-label="Eliminar imagen ${index + 1}">
+                <i class="bi bi-x" aria-hidden="true"></i>
               </button>
             `;
             
             previewContainer.appendChild(div);
             
-            // Botón para eliminar preview
             div.querySelector('.image-preview-remove').addEventListener('click', function() {
               div.remove();
             });
@@ -380,17 +343,18 @@ VulcanoApp.setupImagePreview = function() {
     });
   });
   
-  // Drag and drop para subida de imágenes
+  // Drag and drop
   const dropZones = document.querySelectorAll('.image-upload-area');
   dropZones.forEach(zone => {
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      zone.addEventListener(eventName, preventDefaults, false);
-    });
+    if (zone.dataset.dragDropAdded) return;
+    zone.dataset.dragDropAdded = 'true';
     
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      zone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
     
     ['dragenter', 'dragover'].forEach(eventName => {
       zone.addEventListener(eventName, () => zone.classList.add('dragover'), false);
@@ -413,9 +377,12 @@ VulcanoApp.setupImagePreview = function() {
   });
 };
 
-// ========== DIÁLOGOS DE CONFIRMACIÓN ==========
+// ========== CONFIRMACIÓN ==========
 VulcanoApp.setupConfirmDialogs = function() {
   document.querySelectorAll('[data-confirm]').forEach(element => {
+    if (element.dataset.confirmAdded) return;
+    element.dataset.confirmAdded = 'true';
+    
     element.addEventListener('click', function(e) {
       const message = this.dataset.confirm || '¿Estás seguro de realizar esta acción?';
       if (!confirm(message)) {
@@ -426,59 +393,37 @@ VulcanoApp.setupConfirmDialogs = function() {
   });
 };
 
-// ========== ACCIONES AJAX ==========
-VulcanoApp.setupAjaxActions = function() {
-  // Marcar mensaje como leído
-  document.querySelectorAll('[data-action="mark-read"]').forEach(btn => {
-    btn.addEventListener('click', async function() {
-      const messageId = this.dataset.messageId;
-      try {
-        const response = await fetch(`/ajax/mensaje/${messageId}/marcar-leido/`, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': VulcanoApp.getCsrfToken(),
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          this.closest('.message-item')?.classList.add('read');
-          VulcanoApp.showToast('Mensaje marcado como leído', 'success');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        VulcanoApp.showToast('Error al marcar mensaje', 'error');
-      }
+// ========== SCROLL TO TOP ==========
+VulcanoApp.setupScrollToTop = function() {
+  const scrollBtn = document.getElementById('scrollToTop');
+  if (!scrollBtn) return;
+  
+  const toggleVisibility = () => {
+    const shouldShow = window.pageYOffset > 300;
+    scrollBtn.style.display = shouldShow ? 'block' : 'none';
+    scrollBtn.setAttribute('aria-hidden', String(!shouldShow));
+  };
+  
+  window.addEventListener('scroll', toggleVisibility, { passive: true });
+  toggleVisibility();
+  
+  scrollBtn.addEventListener('click', () => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({
+      top: 0,
+      behavior: reducedMotion ? 'auto' : 'smooth'
     });
   });
-  
-  // Toggle proyecto destacado
-  document.querySelectorAll('[data-action="toggle-featured"]').forEach(btn => {
-    btn.addEventListener('click', async function() {
-      const projectId = this.dataset.projectId;
-      try {
-        const response = await fetch(`/ajax/proyecto/${projectId}/destacar/`, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': VulcanoApp.getCsrfToken(),
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          this.textContent = data.is_featured ? 'Quitar destacado' : 'Destacar';
-          VulcanoApp.showToast(
-            data.is_featured ? 'Proyecto destacado' : 'Proyecto sin destacar',
-            'success'
-          );
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        VulcanoApp.showToast('Error al actualizar proyecto', 'error');
-      }
-    });
+};
+
+// ========== ACTIVE LINKS ==========
+VulcanoApp.setupActiveLinks = function() {
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-link-dashboard, .nav-link').forEach(link => {
+    if (link.getAttribute('href') === currentPath) {
+      link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
+    }
   });
 };
 
@@ -490,32 +435,9 @@ VulcanoApp.getCsrfToken = function() {
 VulcanoApp.debounce = function(func, wait) {
   let timeout;
   return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
     clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+    timeout = setTimeout(() => func(...args), wait);
   };
-};
-
-VulcanoApp.formatNumber = function(num) {
-  return new Intl.NumberFormat('es-MX').format(num);
-};
-
-VulcanoApp.formatCurrency = function(amount) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  }).format(amount);
-};
-
-VulcanoApp.formatDate = function(date) {
-  return new Intl.DateTimeFormat('es-MX', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(new Date(date));
 };
 
 // ========== INICIALIZACIÓN ==========
@@ -525,5 +447,4 @@ if (document.readyState === 'loading') {
   VulcanoApp.init();
 }
 
-// Exportar para uso global
 window.VulcanoApp = VulcanoApp;

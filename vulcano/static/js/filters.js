@@ -9,8 +9,13 @@ const ProjectFilters = {
   currentCategory: '',
   currentSearch: '',
   currentSort: '-created_at',
+  initialized: false,
   
   init() {
+    if (this.initialized) return;
+    this.initialized = true;
+    
+    this.initFromURL();
     this.setupCategoryFilters();
     this.setupSearch();
     this.setupSortSelect();
@@ -25,10 +30,18 @@ const ProjectFilters = {
     const filterButtons = document.querySelectorAll('.filter-btn[data-category]');
     
     filterButtons.forEach(button => {
+      if (button.dataset.filterAdded) return;
+      button.dataset.filterAdded = 'true';
+      
       button.addEventListener('click', () => {
         // Actualizar estado activo
-        filterButtons.forEach(btn => btn.classList.remove('active'));
+        filterButtons.forEach(btn => {
+          btn.classList.remove('active');
+          btn.removeAttribute('aria-current');
+        });
+        
         button.classList.add('active');
+        button.setAttribute('aria-current', 'true');
         
         // Aplicar filtro
         this.currentCategory = button.dataset.category;
@@ -43,7 +56,9 @@ const ProjectFilters = {
   setupSearch() {
     const searchInput = document.querySelector('.search-input, [data-search]');
     
-    if (searchInput) {
+    if (searchInput && !searchInput.dataset.searchAdded) {
+      searchInput.dataset.searchAdded = 'true';
+      
       const debouncedSearch = this.debounce((value) => {
         this.currentSearch = value;
         this.applyFilters();
@@ -54,12 +69,13 @@ const ProjectFilters = {
       });
       
       // Limpiar búsqueda
-      const clearBtn = searchInput.parentElement.querySelector('.search-clear');
+      const clearBtn = searchInput.parentElement.querySelector('.search-clear, [data-search-clear]');
       if (clearBtn) {
         clearBtn.addEventListener('click', () => {
           searchInput.value = '';
           this.currentSearch = '';
           this.applyFilters();
+          searchInput.focus();
         });
       }
     }
@@ -71,7 +87,9 @@ const ProjectFilters = {
   setupSortSelect() {
     const sortSelect = document.querySelector('.sort-select, [data-sort]');
     
-    if (sortSelect) {
+    if (sortSelect && !sortSelect.dataset.sortAdded) {
+      sortSelect.dataset.sortAdded = 'true';
+      
       sortSelect.addEventListener('change', (e) => {
         this.currentSort = e.target.value;
         this.applyFilters();
@@ -83,17 +101,21 @@ const ProjectFilters = {
    * Configura botón para limpiar filtros
    */
   setupClearFilters() {
-    const clearButton = document.querySelector('[data-clear-filters]');
+    const clearButtons = document.querySelectorAll('[data-clear-filters]');
     
-    if (clearButton) {
-      clearButton.addEventListener('click', () => {
+    clearButtons.forEach(button => {
+      if (button.dataset.clearAdded) return;
+      button.dataset.clearAdded = 'true';
+      
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
         this.clearAllFilters();
       });
-    }
+    });
   },
   
   /**
-   * Aplica filtros actuales
+   * Aplica filtros actuales (recarga la página con query params)
    */
   applyFilters() {
     const params = new URLSearchParams();
@@ -110,7 +132,7 @@ const ProjectFilters = {
       params.append('sort', this.currentSort);
     }
     
-    // Actualizar URL y recargar
+    // Actualizar URL
     const url = params.toString() ? `?${params.toString()}` : window.location.pathname;
     window.location.href = url;
   },
@@ -124,8 +146,16 @@ const ProjectFilters = {
     this.currentSort = '-created_at';
     
     // Limpiar UI
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.filter-btn[data-category=""]').forEach(btn => btn.classList.add('active'));
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+      btn.removeAttribute('aria-current');
+    });
+    
+    const allBtn = document.querySelector('.filter-btn[data-category=""]');
+    if (allBtn) {
+      allBtn.classList.add('active');
+      allBtn.setAttribute('aria-current', 'true');
+    }
     
     const searchInput = document.querySelector('.search-input, [data-search]');
     if (searchInput) searchInput.value = '';
@@ -134,44 +164,43 @@ const ProjectFilters = {
     if (sortSelect) sortSelect.value = '-created_at';
     
     // Aplicar
-    this.applyFilters();
+    window.location.href = window.location.pathname;
   },
   
   /**
-   * Filtrado del lado del cliente (para resultados ya cargados)
+   * Filtrado del lado del cliente (opcional, para UX sin recarga)
    */
   filterClientSide() {
-    const projectCards = document.querySelectorAll('.project-card');
+    const projectCards = document.querySelectorAll('.project-card[data-category]');
     let visibleCount = 0;
     
     projectCards.forEach(card => {
       const category = card.dataset.category || '';
-      const title = card.dataset.title?.toLowerCase() || '';
-      const description = card.dataset.description?.toLowerCase() || '';
+      const title = (card.dataset.title || '').toLowerCase();
+      const description = (card.dataset.description || '').toLowerCase();
       const searchLower = this.currentSearch.toLowerCase();
       
-      // Verificar categoría
       const categoryMatch = !this.currentCategory || category === this.currentCategory;
-      
-      // Verificar búsqueda
       const searchMatch = !this.currentSearch || 
                          title.includes(searchLower) || 
                          description.includes(searchLower);
       
-      // Mostrar u ocultar
       if (categoryMatch && searchMatch) {
         card.style.display = '';
-        card.style.animation = 'fadeInUp 0.4s ease-out';
+        card.removeAttribute('aria-hidden');
+        
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          card.style.animation = 'fadeInUp 0.4s ease-out';
+        }
         visibleCount++;
       } else {
         card.style.display = 'none';
+        card.setAttribute('aria-hidden', 'true');
       }
     });
     
-    // Mostrar mensaje si no hay resultados
     this.updateEmptyState(visibleCount);
     
-    // Ordenar si es necesario
     if (this.currentSort) {
       this.sortClientSide();
     }
@@ -208,19 +237,18 @@ const ProjectFilters = {
           return bValue - aValue;
           
         case 'created_at':
-          aValue = new Date(a.dataset.created);
-          bValue = new Date(b.dataset.created);
+          aValue = new Date(a.dataset.created || 0);
+          bValue = new Date(b.dataset.created || 0);
           return aValue - bValue;
           
         case '-created_at':
         default:
-          aValue = new Date(a.dataset.created);
-          bValue = new Date(b.dataset.created);
+          aValue = new Date(a.dataset.created || 0);
+          bValue = new Date(b.dataset.created || 0);
           return bValue - aValue;
       }
     });
     
-    // Re-insertar en orden
     cards.forEach(card => container.appendChild(card));
   },
   
@@ -232,16 +260,17 @@ const ProjectFilters = {
     
     if (count === 0 && !emptyState) {
       emptyState = document.createElement('div');
-      emptyState.className = 'empty-state empty-state-filters';
+      emptyState.className = 'empty-state empty-state-filters text-center py-5';
+      emptyState.setAttribute('role', 'status');
       emptyState.innerHTML = `
-        <div class="empty-state-icon">🔍</div>
-        <h3 class="empty-state-title">No se encontraron proyectos</h3>
-        <p class="empty-state-text">Intenta ajustar tus filtros o búsqueda</p>
-        <button class="btn btn-primary" data-clear-filters>Limpiar filtros</button>
+        <div class="empty-state-icon" aria-hidden="true">🔍</div>
+        <h3 class="empty-state-title h4">No se encontraron proyectos</h3>
+        <p class="empty-state-text text-muted">Intenta ajustar tus filtros o búsqueda</p>
+        <button class="btn btn-primary mt-3" data-clear-filters>Limpiar filtros</button>
       `;
       
       const container = document.querySelector('.projects-grid');
-      if (container) {
+      if (container && container.parentElement) {
         container.parentElement.appendChild(emptyState);
       }
       
@@ -260,12 +289,8 @@ const ProjectFilters = {
   debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
       clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
+      timeout = setTimeout(() => func(...args), wait);
     };
   },
   
@@ -295,8 +320,12 @@ const ProjectFilters = {
     if (this.currentCategory) {
       const activeBtn = document.querySelector(`.filter-btn[data-category="${this.currentCategory}"]`);
       if (activeBtn) {
-        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.classList.remove('active');
+          btn.removeAttribute('aria-current');
+        });
         activeBtn.classList.add('active');
+        activeBtn.setAttribute('aria-current', 'true');
       }
     }
     
@@ -312,16 +341,11 @@ const ProjectFilters = {
   }
 };
 
-// Inicializar cuando el DOM esté listo
+// Inicializar
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    ProjectFilters.init();
-    ProjectFilters.initFromURL();
-  });
+  document.addEventListener('DOMContentLoaded', () => ProjectFilters.init());
 } else {
   ProjectFilters.init();
-  ProjectFilters.initFromURL();
 }
 
-// Exportar para uso global
 window.ProjectFilters = ProjectFilters;

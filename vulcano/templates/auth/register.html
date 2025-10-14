@@ -1,19 +1,14 @@
-{% extends 'base.html' %}
+{% extends 'auth/base_auth.html' %}
 {% load static %}
 
-{% block title %}Registro - Vulcano{% endblock %}
-
-{% block body_class %}auth-page{% endblock %}
-
-{% block navbar %}{% endblock %}
-{% block footer %}{% endblock %}
+{% block title %}Registro - IHMAN{% endblock %}
 
 {% block content %}
 <div class="auth-wrapper">
     <div class="auth-container" style="max-width: 600px;">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">Vulcano</div>
+                <div class="auth-logo">IHMAN</div>
                 <h1 class="auth-title">Crea tu cuenta</h1>
                 <p class="auth-subtitle">Únete a la comunidad de arquitectura más grande</p>
             </div>
@@ -29,13 +24,13 @@
             </div>
             {% endif %}
             
-            <form method="post" class="auth-form" data-validate="true" novalidate>
+            <form method="post" class="auth-form" novalidate>
                 {% csrf_token %}
                 
                 <!-- Rol -->
                 <div class="form-group-auth">
                     <label class="form-label-auth">
-                        ¿Cómo deseas usar Vulcano? <span class="form-label-required">*</span>
+                        ¿Cómo deseas usar IHMAN? <span class="form-label-required">*</span>
                     </label>
                     <div class="role-selector">
                         <div class="role-option">
@@ -171,7 +166,7 @@
                            name="{{ form.phone.name }}" 
                            id="{{ form.phone.id_for_label }}"
                            class="form-input-auth {% if form.phone.errors %}is-invalid{% endif %}"
-                           placeholder="+52 55 1234 5678"
+                           placeholder="+51 984 421 731"
                            value="{{ form.phone.value|default:'' }}">
                     {% if form.phone.errors %}
                     <div class="form-error">
@@ -212,7 +207,7 @@
                                class="form-input-auth {% if form.password1.errors %}is-invalid{% endif %}"
                                placeholder="Crea una contraseña segura"
                                required>
-                        <button type="button" class="password-toggle" tabindex="-1" onclick="togglePassword(this)">
+                        <button type="button" class="password-toggle" tabindex="-1" aria-label="Mostrar/ocultar contraseña">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
@@ -237,7 +232,7 @@
                                class="form-input-auth {% if form.password2.errors %}is-invalid{% endif %}"
                                placeholder="Confirma tu contraseña"
                                required>
-                        <button type="button" class="password-toggle" tabindex="-1" onclick="togglePassword(this)">
+                        <button type="button" class="password-toggle" tabindex="-1" aria-label="Mostrar/ocultar contraseña">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
@@ -250,7 +245,7 @@
                 </div>
                 
                 <!-- Términos y condiciones -->
-                <div class="form-check-auth">
+                <div class="form-check-auth mb-4">
                     <input type="checkbox" class="form-check-input-auth" id="terms" required>
                     <label class="form-check-label-auth" for="terms">
                         Acepto los <a href="#" class="auth-footer-link">Términos y Condiciones</a> 
@@ -278,21 +273,32 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-function togglePassword(button) {
-    const input = button.parentElement.querySelector('input');
-    const icon = button.querySelector('i');
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle para mostrar/ocultar contraseña
+    const passwordToggles = document.querySelectorAll('.password-toggle');
     
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('bi-eye');
-        icon.classList.add('bi-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('bi-eye-slash');
-        icon.classList.add('bi-eye');
-    }
-}
+    passwordToggles.forEach(function(button) {
+        button.addEventListener('click', function() {
+            const input = this.parentElement.querySelector('input');
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+                this.setAttribute('aria-label', 'Ocultar contraseña');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+                this.setAttribute('aria-label', 'Mostrar contraseña');
+            }
+        });
+    });
+});
 </script>
 {% endblock %}

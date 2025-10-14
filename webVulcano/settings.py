@@ -178,7 +178,7 @@ STORAGES = {
 # ============================================================================
 # CLOUDINARY - Archivos Media
 # ============================================================================
-CLOUDINARY_URL = config('CLOUDINARY_URL', default='')
+CLOUDINARY_URL = config('CLOUDINARY_URL', default='cloudinary://116387575249446:yLl0BoKXUvLJQ__hH1sqoq7yuMs@dmsllccgd')
 
 if CLOUDINARY_URL:
     import cloudinary
