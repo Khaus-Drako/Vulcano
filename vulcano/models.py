@@ -38,7 +38,7 @@ class UserProfile(models.Model):
         blank=True,
         null=True,
         verbose_name='Teléfono',
-        help_text='Formato: +56 9 1234 5678'
+        help_text='Formato: +51 999 888 666'
     )
     company = models.CharField(
         max_length=200,

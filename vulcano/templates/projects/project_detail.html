@@ -190,11 +190,37 @@
                     </p>
                     {% endif %}
                     
+                    {# Botones de contacto #}
                     {% if user.is_authenticated and user != project.arquitecto %}
-                    <a href="{% url 'vulcano:message_compose' %}?recipient={{ project.arquitecto.id }}&project={{ project.id }}" 
-                       class="btn btn-primary w-100 mt-3">
-                        <i class="bi bi-envelope me-2"></i> Enviar Mensaje
-                    </a>
+                        <div class="d-grid gap-2 mt-3">
+                            {# Botón WhatsApp (prioridad si existe teléfono) #}
+                            {% if project.arquitecto.profile.phone %}
+                            <a href="https://wa.me/{{ project.arquitecto.profile.phone|cut:' '|cut:'+'|cut:'-' }}?text=Hola%20{{ project.arquitecto.get_full_name|default:project.arquitecto.username|urlencode }},%20vi%20tu%20proyecto%20%22{{ project.title|urlencode }}%22%20en%20IHMAN%20y%20me%20gustaría%20consultarte%20sobre:" 
+                               class="btn btn-success w-100"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               aria-label="Contactar por WhatsApp a {{ project.arquitecto.get_full_name }}">
+                                <i class="bi bi-whatsapp me-2"></i> Contactar con Arquitecto
+                            </a>
+                            {% endif %}
+                            
+                            {# Botón de mensaje interno #}
+                            <a href="{% url 'vulcano:message_compose' %}?recipient={{ project.arquitecto.id }}&project={{ project.id }}" 
+                               class="btn btn-{% if project.arquitecto.profile.phone %}outline-{% endif %}primary w-100">
+                                <i class="bi bi-envelope me-2"></i> Enviar Mensaje
+                            </a>
+                        </div>
+                    {% elif not user.is_authenticated %}
+                        {# Para usuarios no autenticados, mostrar WhatsApp si existe #}
+                        {% if project.arquitecto.profile.phone %}
+                        <a href="https://wa.me/{{ project.arquitecto.profile.phone|cut:' '|cut:'+'|cut:'-' }}?text=Hola,%20vi%20el%20proyecto%20%22{{ project.title|urlencode }}%22%20en%20IHMAN%20y%20me%20gustaría%20más%20información." 
+                           class="btn btn-success w-100 mt-3"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="Contactar por WhatsApp">
+                            <i class="bi bi-whatsapp me-2"></i> Contactar con Arquitecto
+                        </a>
+                        {% endif %}
                     {% endif %}
                 </div>
                 

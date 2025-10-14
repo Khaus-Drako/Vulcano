@@ -1,14 +1,6 @@
 {% load static %}
 
 <div class="sidebar-header">
-    <div class="sidebar-logo">
-        <a href="{% url 'vulcano:home' %}" 
-           class="text-decoration-none text-primary-custom"
-           aria-label="Ir al inicio">
-            IHMAN
-        </a>
-    </div>
-    
     {% if user.is_authenticated %}
     <div class="sidebar-user">
         {% if user.profile.avatar %}
@@ -52,20 +44,7 @@
                     <span class="nav-text">Dashboard</span>
                 </a>
             </div>
-
-            <div class="nav-item">
-                <a href="{% url 'vulcano:inbox' %}" 
-                   class="nav-link-dashboard {% if 'inbox' in request.resolver_match.url_name or 'message' in request.resolver_match.url_name %}active{% endif %}"
-                   {% if 'inbox' in request.resolver_match.url_name %}aria-current="page"{% endif %}>
-                    <span class="nav-icon"><i class="bi bi-envelope" aria-hidden="true"></i></span>
-                    <span class="nav-text">Mensajes</span>
-                    {% if unread_messages_count|default:0 > 0 %}
-                        <span class="nav-badge" aria-label="{{ unread_messages_count }} mensajes sin leer">
-                            {{ unread_messages_count }}
-                        </span>
-                    {% endif %}
-                </a>
-            </div>
+            <div class="nav-section-title">Cuenta</div>
 
             <div class="nav-item">
                 <a href="{% url 'vulcano:profile' %}" 
@@ -75,34 +54,15 @@
                     <span class="nav-text">Mi Perfil</span>
                 </a>
             </div>
+
+            <div class="nav-item">
+                <a href="#" class="nav-link-dashboard">
+                    <span class="nav-icon"><i class="bi bi-book" aria-hidden="true"></i></span>
+                    <span class="nav-text">Nosotros</span>
+                </a>
+            </div>
         {% endif %}
     </div>
-    
-    <!-- Sección Proyectos (solo arquitectos y admin) -->
-    {% if user.is_authenticated %}
-        {% if user.profile.is_arquitecto or user.profile.is_admin %}
-        <div class="nav-section">
-            <div class="nav-section-title">Proyectos</div>
-            
-            <div class="nav-item">
-                <a href="{% url 'vulcano:project_create' %}" 
-                   class="nav-link-dashboard {% if request.resolver_match.url_name == 'project_create' %}active{% endif %}"
-                   {% if request.resolver_match.url_name == 'project_create' %}aria-current="page"{% endif %}>
-                    <span class="nav-icon"><i class="bi bi-plus-circle" aria-hidden="true"></i></span>
-                    <span class="nav-text">Nuevo Proyecto</span>
-                </a>
-            </div>
-            
-            <div class="nav-item">
-                <a href="{% url 'vulcano:home' %}?arquitecto={{ user.id }}" 
-                   class="nav-link-dashboard">
-                    <span class="nav-icon"><i class="bi bi-folder" aria-hidden="true"></i></span>
-                    <span class="nav-text">Mis Proyectos</span>
-                </a>
-            </div>
-        </div>
-        {% endif %}
-    {% endif %}
     
     <!-- Sección Administración (solo admin) -->
     {% if user.is_authenticated %}
@@ -131,6 +91,13 @@
                     <i class="bi bi-box-arrow-up-right ms-auto" aria-hidden="true" style="font-size: 0.75rem;"></i>
                 </a>
             </div>
+
+            <div class="nav-item">
+                <a href="#" class="nav-link-dashboard">
+                    <span class="nav-icon"><i class="bi bi-book" aria-hidden="true"></i></span>
+                    <span class="nav-text">Nosotros</span>
+                </a>
+            </div>
         </div>
         {% endif %}
     {% endif %}
@@ -138,27 +105,12 @@
     <!-- Sección Cuenta -->
     {% if user.is_authenticated %}
     <div class="nav-section">
-        <div class="nav-section-title">Cuenta</div>
-        
-        <div class="nav-item">
-            <a href="#" class="nav-link-dashboard">
-                <span class="nav-icon"><i class="bi bi-gear" aria-hidden="true"></i></span>
-                <span class="nav-text">Configuración</span>
-            </a>
-        </div>
+        <div class="nav-section-title">Soporte</div>
         
         <div class="nav-item">
             <a href="#" class="nav-link-dashboard">
                 <span class="nav-icon"><i class="bi bi-question-circle" aria-hidden="true"></i></span>
                 <span class="nav-text">Ayuda</span>
-            </a>
-        </div>
-        
-        <div class="nav-item">
-            <a href="{% url 'vulcano:logout' %}" 
-               class="nav-link-dashboard text-danger">
-                <span class="nav-icon"><i class="bi bi-box-arrow-right" aria-hidden="true"></i></span>
-                <span class="nav-text">Cerrar Sesión</span>
             </a>
         </div>
     </div>
@@ -176,6 +128,13 @@
             <a href="{% url 'vulcano:register' %}" class="nav-link-dashboard">
                 <span class="nav-icon"><i class="bi bi-person-plus" aria-hidden="true"></i></span>
                 <span class="nav-text">Registrarse</span>
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="#" class="nav-link-dashboard">
+                <span class="nav-icon"><i class="bi bi-book" aria-hidden="true"></i></span>
+                <span class="nav-text">Nosotros</span>
             </a>
         </div>
     </div>

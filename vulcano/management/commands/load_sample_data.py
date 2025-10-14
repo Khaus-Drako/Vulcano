@@ -680,7 +680,7 @@ Infraestructura industrial que establece nuevos estándares de eficiencia operat
         self.stdout.write('     Usuario: admin')
         self.stdout.write('     Contraseña: admin123')
         self.stdout.write('   Arquitectos:')
-        self.stdout.write('     Usuario: arquitecto1, arquitecto2, arquitecto3')
+        self.stdout.write('     Usuario: jhilariop')
         self.stdout.write('     Contraseña: arquitecto123')
         self.stdout.write('   Clientes:')
         self.stdout.write('     Usuario: cliente1, cliente2, cliente3, cliente4')
