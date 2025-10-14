@@ -1,0 +1,96 @@
+/* ========== FOOTER STYLES ========== */
+.footer-vulcano {
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    position: relative;
+}
+
+.footer-title {
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+    position: relative;
+}
+
+.footer-nav li {
+    transition: transform var(--transition-fast);
+}
+
+.footer-nav li:hover {
+    transform: translateX(5px);
+}
+
+.footer-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    display: inline-block;
+    position: relative;
+}
+
+.footer-link:hover {
+    color: var(--color-primary);
+}
+
+.footer-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background-color: var(--color-primary);
+    transition: width var(--transition-fast);
+}
+
+.footer-link:hover::after {
+    width: 100%;
+}
+
+.social-link {
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    opacity: 0.8;
+}
+
+.social-link:hover {
+    color: var(--color-primary);
+    opacity: 1;
+    transform: translateY(-3px);
+}
+
+.contact-info li {
+    transition: transform var(--transition-fast);
+}
+
+.contact-info li:hover {
+    transform: translateX(5px);
+}
+
+.contact-info i {
+    color: var(--color-primary);
+}
+
+/* Footer Bottom */
+.footer-vulcano hr {
+    border-color: var(--border-color);
+}
+
+.footer-vulcano .small {
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .footer-vulcano {
+        text-align: center;
+    }
+    
+    .contact-info li {
+        justify-content: center;
+    }
+    
+    .social-links {
+        justify-content: center;
+    }
+}

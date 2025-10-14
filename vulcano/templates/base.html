@@ -52,6 +52,7 @@
     <link rel="stylesheet" href="{% static 'css/dashboard_layout.css' %}">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'css/projects.css' %}">
+    <link rel="stylesheet" href="{% static 'css/footer.css' %}">
     
     {% block extra_css %}{% endblock %}
     
@@ -135,82 +136,87 @@
 
     <!-- Footer -->
     {% block footer %}
-    <footer class="footer-vulcano">
+    <footer class="footer-vulcano py-5 mt-auto">
         <div class="container-fluid container-custom">
-            <div class="row">
+            <div class="row g-4">
+                <!-- Columna de Marca -->
                 <div class="col-lg-4 mb-4 mb-lg-0">
-                    <h3 class="footer-title" style="font-family: var(--font-serif);">IHMAN</h3>
-                    <p class="text-muted">
+                    <h3 class="footer-title display-6 mb-3" style="font-family: var(--font-serif);">IHMAN</h3>
+                    <p class="text-muted lead mb-4">
                         Plataforma líder en gestión de proyectos arquitectónicos. 
                         Conectamos contigo para crear espacios únicos.
                     </p>
-                    <div class="d-flex gap-3 mt-3">
-                        <a href="#" class="text-muted" aria-label="Facebook">
+                    <div class="d-flex gap-4 mt-3">
+                        <a href="#" class="social-link" aria-label="Facebook">
                             <i class="bi bi-facebook fs-4"></i>
                         </a>
-                        <a href="#" class="text-muted" aria-label="Instagram">
+                        <a href="#" class="social-link" aria-label="Instagram">
                             <i class="bi bi-instagram fs-4"></i>
                         </a>
-                        <a href="#" class="text-muted" aria-label="LinkedIn">
+                        <a href="#" class="social-link" aria-label="LinkedIn">
                             <i class="bi bi-linkedin fs-4"></i>
                         </a>
-                        <a href="#" class="text-muted" aria-label="Twitter">
+                        <a href="#" class="social-link" aria-label="Twitter">
                             <i class="bi bi-twitter-x fs-4"></i>
                         </a>
                     </div>
                 </div>
                 
+                <!-- Columna de Navegación -->
                 <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
-                    <h5 class="footer-title">Explorar</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{% url 'vulcano:home' %}" class="footer-link">Inicio</a></li>
-                        <li><a href="{% url 'vulcano:home' %}?category=" class="footer-link">Proyectos</a></li>
-                        <li><a href="#" class="footer-link">Arquitectos</a></li>
-                        <li><a href="#" class="footer-link">Sobre Nosotros</a></li>
+                    <h5 class="footer-title fw-bold mb-3">Explorar</h5>
+                    <ul class="list-unstyled footer-nav">
+                        <li class="mb-2"><a href="{% url 'vulcano:home' %}" class="footer-link">Inicio</a></li>
+                        <li class="mb-2"><a href="{% url 'vulcano:home' %}?category=" class="footer-link">Proyectos</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link">Arquitectos</a></li>
+                        <li class="mb-2"><a href="#" class="footer-link">Sobre Nosotros</a></li>
                     </ul>
                 </div>
                 
+                <!-- Columna de Categorías -->
                 <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
-                    <h5 class="footer-title">Categorías</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{% url 'vulcano:home' %}?category=residential" class="footer-link">Residencial</a></li>
-                        <li><a href="{% url 'vulcano:home' %}?category=commercial" class="footer-link">Comercial</a></li>
-                        <li><a href="{% url 'vulcano:home' %}?category=cultural" class="footer-link">Cultural</a></li>
-                        <li><a href="{% url 'vulcano:home' %}?category=landscape" class="footer-link">Paisajismo</a></li>
+                    <h5 class="footer-title fw-bold mb-3">Categorías</h5>
+                    <ul class="list-unstyled footer-nav">
+                        <li class="mb-2"><a href="{% url 'vulcano:home' %}?category=residential" class="footer-link">Residencial</a></li>
+                        <li class="mb-2"><a href="{% url 'vulcano:home' %}?category=commercial" class="footer-link">Comercial</a></li>
+                        <li class="mb-2"><a href="{% url 'vulcano:home' %}?category=cultural" class="footer-link">Cultural</a></li>
+                        <li class="mb-2"><a href="{% url 'vulcano:home' %}?category=landscape" class="footer-link">Paisajismo</a></li>
                     </ul>
                 </div>
                 
+                <!-- Columna de Contacto -->
                 <div class="col-lg-4 col-md-12">
-                    <h5 class="footer-title">Contacto</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="bi bi-geo-alt me-2"></i>
+                    <h5 class="footer-title fw-bold mb-3">Contacto</h5>
+                    <ul class="list-unstyled contact-info">
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-geo-alt me-3 fs-5"></i>
                             <span class="text-muted">Ciudad de Lima, Perú</span>
                         </li>
-                        <li class="mb-2">
-                            <i class="bi bi-envelope me-2"></i>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-envelope me-3 fs-5"></i>
                             <a href="mailto:contacto@ihman.com" class="footer-link">contacto@ihman.com</a>
                         </li>
-                        <li class="mb-2">
-                            <i class="bi bi-telephone me-2"></i>
+                        <li class="d-flex align-items-center mb-3">
+                            <i class="bi bi-telephone me-3 fs-5"></i>
                             <a href="tel:+51984421731" class="footer-link">+51 984 421 731</a>
                         </li>
                     </ul>
                 </div>
             </div>
             
-            <hr class="my-4">
+            <hr class="my-4 opacity-25">
             
-            <div class="row align-items-center">
+            <!-- Footer Bottom -->
+            <div class="row align-items-center py-3">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    <p class="text-muted mb-0">
+                    <p class="text-muted mb-0 small">
                         &copy; {% now "Y" %} IHMAN Architecture. Todos los derechos reservados.
                     </p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
-                    <a href="#" class="footer-link me-3">Términos de Uso</a>
-                    <a href="#" class="footer-link me-3">Privacidad</a>
-                    <a href="#" class="footer-link">Cookies</a>
+                    <a href="#" class="footer-link small me-4">Términos de Uso</a>
+                    <a href="#" class="footer-link small me-4">Privacidad</a>
+                    <a href="#" class="footer-link small">Cookies</a>
                 </div>
             </div>
         </div>
