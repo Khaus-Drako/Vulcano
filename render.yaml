@@ -7,7 +7,7 @@ databases:
 
 services:
   - type: web
-    name: corp-ihman
+    name: ihman-architecture
     runtime: python
     plan: free
     branch: main
