@@ -567,3 +567,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+.image-preview-item {
+  position: relative;
+}
+
+.image-preview-item .badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}

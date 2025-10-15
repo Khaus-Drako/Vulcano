@@ -323,14 +323,11 @@
                 
                 <div class="image-upload-area" id="dropZone">
                     <input type="file" 
-                           name="images" 
-                           id="imageInput"
-                           class="d-none"
-                           multiple
-                           accept="image/jpeg,image/png,image/jpg,image/webp"
-                           data-preview="true"
-                           data-preview-container="#imagePreview"
-                           onchange="handleFileSelect(event)">
+                            name="images" 
+                            id="imageInput"
+                            class="d-none"
+                            multiple
+                            accept="image/jpeg,image/png,image/jpg,image/webp">
                     
                     <label for="imageInput" style="cursor: pointer; width: 100%; height: 100%;" class="d-flex flex-column align-items-center justify-content-center">
                         <div class="upload-icon">
@@ -400,10 +397,18 @@
 </div>
 
 <script>
-// Drag and drop
+// ============================================================================
+// VARIABLES GLOBALES
+// ============================================================================
 const dropZone = document.getElementById('dropZone');
 const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+let currentFiles = new DataTransfer();
+let isProcessing = false; // 👈 Flag para evitar procesamiento doble
 
+// ============================================================================
+// DRAG & DROP
+// ============================================================================
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     dropZone.addEventListener(eventName, preventDefaults, false);
 });
@@ -414,80 +419,278 @@ function preventDefaults(e) {
 }
 
 ['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    dropZone.addEventListener(eventName, () => {
+        dropZone.classList.add('dragover');
+    }, false);
 });
 
 ['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    dropZone.addEventListener(eventName, () => {
+        dropZone.classList.remove('dragover');
+    }, false);
 });
 
 dropZone.addEventListener('drop', handleDrop, false);
 
 function handleDrop(e) {
+    if (isProcessing) return;
+    
     const dt = e.dataTransfer;
     const files = dt.files;
-    imageInput.files = files;
-    imageInput.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    // Limpiar archivos anteriores
+    currentFiles = new DataTransfer();
+    
+    // Agregar archivos validados
+    Array.from(files).forEach(file => {
+        if (validateFile(file)) {
+            currentFiles.items.add(file);
+        }
+    });
+    
+    // Actualizar input
+    imageInput.files = currentFiles.files;
+    
+    // Actualizar preview
+    updatePreview();
 }
 
-function handleFileSelect(event) {
-    const files = event.target.files;
-    const preview = document.getElementById('imagePreview');
-    preview.innerHTML = '';
+// ============================================================================
+// SELECCIÓN DE ARCHIVOS
+// ============================================================================
+imageInput.addEventListener('change', function(event) {
+    if (isProcessing) {
+        console.log('⚠️ Ya se está procesando una selección');
+        return;
+    }
     
+    isProcessing = true;
+    console.log('🔄 Procesando selección de archivos...');
+    
+    const files = event.target.files;
+    
+    // Limpiar archivos anteriores
+    currentFiles = new DataTransfer();
+    
+    // Agregar nuevos archivos validados
+    Array.from(files).forEach(file => {
+        if (validateFile(file)) {
+            currentFiles.items.add(file);
+        }
+    });
+    
+    // Actualizar input
+    imageInput.files = currentFiles.files;
+    
+    // Actualizar preview
+    updatePreview();
+    
+    // Liberar el flag después de un delay
+    setTimeout(() => {
+        isProcessing = false;
+        console.log('✅ Procesamiento completado');
+    }, 500);
+}, { once: false });
+
+// ============================================================================
+// VALIDACIÓN DE ARCHIVOS
+// ============================================================================
+function validateFile(file) {
+    // Validar tipo
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        alert(`⚠️ "${file.name}" no es una imagen válida
+Formatos aceptados: JPG, PNG, WEBP`);
+        return false;
+    }
+    
+    // Validar tamaño (máx 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        alert(`⚠️ "${file.name}" supera los 5MB
+Tamaño: ${formatFileSize(file.size)}`);
+        return false;
+    }
+    
+    return true;
+}
+
+// ============================================================================
+// ACTUALIZAR PREVISUALIZACIÓN
+// ============================================================================
+function updatePreview() {
+    console.log('🖼️ Actualizando preview...');
+    
+    // Limpiar contenedor
+    imagePreview.innerHTML = '';
+    
+    const files = currentFiles.files;
+    
+    // Validar cantidad
+    if (files.length > 10) {
+        alert('⚠️ Máximo 10 imágenes por vez');
+        currentFiles = new DataTransfer();
+        imageInput.value = '';
+        return;
+    }
+    
+    // Si no hay archivos, mostrar mensaje
+    if (files.length === 0) {
+        console.log('ℹ️ No hay archivos para previsualizar');
+        return;
+    }
+    
+    console.log(`📸 Creando ${files.length} previsualizaciones...`);
+    
+    // Crear previsualizaciones
+    let loaded = 0;
     Array.from(files).forEach((file, index) => {
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const div = document.createElement('div');
-                div.className = 'image-preview-item';
-                div.innerHTML = `
-                    <img src="${e.target.result}" class="image-preview-img" alt="Preview ${index + 1}">
-                    <button type="button" class="image-preview-remove" onclick="removePreview(this)">
-                        <i class="bi bi-x"></i>
-                    </button>
-                `;
-                preview.appendChild(div);
-            };
-            reader.readAsDataURL(file);
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'image-preview-item';
+            div.dataset.index = index;
+            div.dataset.filename = file.name;
+            
+            div.innerHTML = `
+                <img src="${e.target.result}" 
+                     class="image-preview-img" 
+                     alt="${file.name}"
+                     title="${file.name}">
+                <button type="button" 
+                        class="image-preview-remove" 
+                        onclick="removePreview(${index})"
+                        title="Eliminar ${file.name}">
+                    <i class="bi bi-x"></i>
+                </button>
+                <div class="position-absolute bottom-0 start-0 m-2">
+                    <span class="badge bg-primary">#${index + 1}</span>
+                </div>
+                <div class="position-absolute bottom-0 end-0 m-2">
+                    <span class="badge bg-dark">${formatFileSize(file.size)}</span>
+                </div>
+            `;
+            
+            imagePreview.appendChild(div);
+            
+            loaded++;
+            if (loaded === files.length) {
+                console.log(`✅ ${loaded} previsualizaciones creadas`);
+            }
+        };
+        
+        reader.onerror = function() {
+            console.error(`❌ Error al leer: ${file.name}`);
+            alert(`Error al cargar la imagen: ${file.name}`);
+        };
+        
+        reader.readAsDataURL(file);
+    });
+}
+
+// ============================================================================
+// ELIMINAR IMAGEN DE LA PREVISUALIZACIÓN
+// ============================================================================
+function removePreview(indexToRemove) {
+    console.log(`🗑️ Eliminando preview #${indexToRemove + 1}`);
+    
+    // Crear nuevo DataTransfer sin el archivo eliminado
+    const newFiles = new DataTransfer();
+    const files = Array.from(currentFiles.files);
+    
+    files.forEach((file, index) => {
+        if (index !== indexToRemove) {
+            newFiles.items.add(file);
+        }
+    });
+    
+    // Actualizar referencias
+    currentFiles = newFiles;
+    imageInput.files = currentFiles.files;
+    
+    // Actualizar preview
+    updatePreview();
+    
+    console.log(`✅ Preview eliminado. Quedan ${currentFiles.files.length} archivos`);
+}
+
+// ============================================================================
+// ELIMINAR IMAGEN EXISTENTE (AJAX)
+// ============================================================================
+function deleteImage(imageId, projectSlug) {
+    if (!confirm('¿Estás seguro de eliminar esta imagen?')) {
+        return;
+    }
+    
+    console.log(`🗑️ Eliminando imagen ${imageId} del proyecto ${projectSlug}`);
+    
+    fetch(`/proyectos/${projectSlug}/imagen/${imageId}/eliminar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Imagen eliminada correctamente');
+            location.reload();
+        } else {
+            throw new Error(data.error || 'Error desconocido');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error:', error);
+        alert(`Error al eliminar la imagen: ${error.message}`);
+    });
+}
+
+// ============================================================================
+// UTILIDADES
+// ============================================================================
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// ============================================================================
+// VALIDACIÓN DE FECHAS
+// ============================================================================
+const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
+const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+
+if (endDateInput && startDateInput) {
+    endDateInput.addEventListener('change', function() {
+        const startDate = startDateInput.value;
+        const endDate = this.value;
+        
+        if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+            this.setCustomValidity('La fecha de finalización debe ser posterior a la fecha de inicio');
+            this.reportValidity();
+        } else {
+            this.setCustomValidity('');
         }
     });
 }
 
-function removePreview(button) {
-    button.closest('.image-preview-item').remove();
-}
-
-function deleteImage(imageId, projectSlug) {
-    if (confirm('¿Estás seguro de eliminar esta imagen?')) {
-        fetch(`/proyectos/${projectSlug}/imagen/${imageId}/eliminar/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error al eliminar la imagen');
-            }
-        });
-    }
-}
-
-// Validación de fechas
-document.getElementById('{{ form.end_date.id_for_label }}').addEventListener('change', function() {
-    const startDate = document.getElementById('{{ form.start_date.id_for_label }}').value;
-    const endDate = this.value;
-    
-    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
-        this.setCustomValidity('La fecha de finalización debe ser posterior a la fecha de inicio');
-    } else {
-        this.setCustomValidity('');
-    }
+// ============================================================================
+// INICIALIZACIÓN
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🌋 Vulcano Project Form initialized');
+    console.log(`📁 Input: ${imageInput ? '✅' : '❌'}`);
+    console.log(`🖼️ Preview: ${imagePreview ? '✅' : '❌'}`);
+    console.log(`📦 Drop Zone: ${dropZone ? '✅' : '❌'}`);
 });
 </script>
 {% endblock %}

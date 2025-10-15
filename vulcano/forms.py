@@ -239,14 +239,19 @@ class MultipleImageUploadForm(forms.Form):
     """
     images = forms.FileField(
         widget=forms.ClearableFileInput(attrs={
-            # 'multiple': True,
             'class': 'form-control',
-            'accept': 'image/jpeg,image/jpg,image/png,image/webp'
+            'accept': 'image/jpeg,image/jpg,image/png,image/webp',
+            'id': 'imageInput'
         }),
         label='Imágenes',
         help_text='Selecciona una o más imágenes (JPG, PNG, WEBP)',
-        required=True
+        required=False
     )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Añadir el atributo 'multiple' después de inicializar
+        self.fields['images'].widget.attrs['multiple'] = 'multiple'
 
 
 class MessageForm(forms.ModelForm):

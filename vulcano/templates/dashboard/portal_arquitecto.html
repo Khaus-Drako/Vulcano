@@ -230,7 +230,7 @@
                                     id="clientDropdown{{ project.id }}" 
                                     data-bs-toggle="dropdown" 
                                     aria-expanded="false">
-                                <i class="bi bi-whatsapp me-1"></i> Contactar
+                                <i class="bi bi-whatsapp me-1"></i>
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="clientDropdown{{ project.id }}">
                                 {% for client in project.clients.all %}
@@ -249,11 +249,11 @@
                         </div>
                         {% endif %}
                         <div class="btn-group btn-group-sm">
-                            <a href="{% url 'vulcano:project_detail' project.slug %}" 
+                            <!--<a href="{% url 'vulcano:project_detail' project.slug %}" 
                                class="btn btn-outline-primary"
                                title="Ver proyecto">
                                 <i class="bi bi-eye"></i>
-                            </a>
+                            </a>-->
                             <a href="{% url 'vulcano:project_edit' project.slug %}" 
                                class="btn btn-outline-primary"
                                title="Editar proyecto">
