@@ -84,12 +84,19 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
   --radius-full: 9999px;
-  --border-radius: var(--radius-md); /* Alias para compatibilidad */
+  --border-radius: var(--radius-md);
   
   /* ========== LAYOUT ========== */
   --navbar-height: 73px;
   --sidebar-width: 280px;
   --sidebar-width-collapsed: 70px;
+  --container-max-width: 1280px;
+  
+  /* ========== BREAKPOINTS (para referencia en JS) ========== */
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
   
   /* ========== Z-INDEX ========== */
   --z-dropdown: 1000;
@@ -195,4 +202,15 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
 }

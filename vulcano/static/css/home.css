@@ -38,6 +38,7 @@
   text-align: center;
   max-width: 900px;
   margin: 0 auto;
+  padding: 0 var(--spacing-lg);
   animation: fadeInUp 0.8s ease-out;
 }
 
@@ -122,8 +123,8 @@
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
-  top: 73px;
-  z-index: 100;
+  top: var(--navbar-height);
+  z-index: calc(var(--z-sticky) - 1);
   backdrop-filter: blur(10px);
 }
 
@@ -139,6 +140,7 @@
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
+  flex: 1;
 }
 
 .filter-btn {
@@ -151,6 +153,7 @@
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .filter-btn:hover {
@@ -169,6 +172,7 @@
   display: flex;
   gap: var(--spacing-sm);
   min-width: 300px;
+  flex-shrink: 0;
 }
 
 .search-input {
@@ -179,6 +183,7 @@
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: all var(--transition-fast);
+  font-family: var(--font-sans);
 }
 
 .search-input:focus {
@@ -194,6 +199,8 @@
   background: var(--bg-primary);
   color: var(--text-primary);
   cursor: pointer;
+  font-family: var(--font-sans);
+  min-width: 180px;
 }
 
 /* ========== PROJECTS GRID ========== */
@@ -347,6 +354,7 @@
   align-items: center;
   justify-content: center;
   transition: all var(--transition-fast);
+  font-size: var(--font-size-lg);
 }
 
 .lightbox-close:hover {
@@ -393,6 +401,12 @@
   gap: var(--spacing-sm);
   justify-content: center;
   margin-top: var(--spacing-3xl);
+  list-style: none;
+  padding: 0;
+}
+
+.pagination-vulcano .page-item {
+  list-style: none;
 }
 
 .pagination-vulcano .page-link {
@@ -402,6 +416,11 @@
   color: var(--text-primary);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
 }
 
 .pagination-vulcano .page-link:hover {
@@ -441,6 +460,21 @@
 }
 
 /* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+  .filters-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    justify-content: center;
+  }
+  
+  .search-box {
+    min-width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-vulcano {
     min-height: 70vh;
@@ -449,15 +483,24 @@
   
   .hero-actions {
     flex-direction: column;
+    width: 100%;
   }
   
-  .filters-container {
-    flex-direction: column;
-    align-items: stretch;
+  .hero-actions .btn {
+    width: 100%;
+  }
+  
+  .filters-section {
+    position: relative;
+    top: 0;
   }
   
   .search-box {
     min-width: 100%;
+  }
+  
+  .sort-select {
+    width: 100%;
   }
   
   .projects-grid,

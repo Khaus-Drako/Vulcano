@@ -31,11 +31,13 @@
   font-size: var(--font-size-sm);
   color: var(--text-muted);
   margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
 }
 
 .breadcrumb-link {
   color: var(--color-primary);
   transition: color var(--transition-fast);
+  text-decoration: none;
 }
 
 .breadcrumb-link:hover {
@@ -131,6 +133,8 @@
   transition: all var(--transition-fast);
   z-index: 2;
   box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
 }
 
 .gallery-nav-btn:hover {
@@ -247,10 +251,12 @@
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--color-primary);
+  flex-shrink: 0;
 }
 
 .architect-details {
   flex: 1;
+  min-width: 0;
 }
 
 .architect-name {
@@ -275,6 +281,7 @@
   justify-content: space-between;
   padding: var(--spacing-sm) 0;
   border-bottom: 1px solid var(--border-light);
+  gap: var(--spacing-md);
 }
 
 .spec-item:last-child {
@@ -289,6 +296,7 @@
 .spec-value {
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
+  text-align: right;
 }
 
 /* ========== PROGRESS BAR ========== */
@@ -356,6 +364,7 @@
 .form-section:last-child {
   border-bottom: none;
   margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .form-section-title {
@@ -446,6 +455,7 @@
   align-items: center;
   justify-content: center;
   transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
 }
 
 .image-preview-remove:hover {
@@ -460,6 +470,7 @@
   justify-content: flex-end;
   padding-top: var(--spacing-xl);
   border-top: 1px solid var(--border-light);
+  margin-top: var(--spacing-xl);
 }
 
 /* ========== DELETE CONFIRMATION ========== */
@@ -525,6 +536,15 @@
   .gallery-nav-btn {
     width: 40px;
     height: 40px;
+    font-size: var(--font-size-lg);
+  }
+  
+  .gallery-prev {
+    left: var(--spacing-sm);
+  }
+  
+  .gallery-next {
+    right: var(--spacing-sm);
   }
   
   .project-form-container {
@@ -537,6 +557,10 @@
   
   .form-actions {
     flex-direction: column;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
   }
   
   .related-grid {
