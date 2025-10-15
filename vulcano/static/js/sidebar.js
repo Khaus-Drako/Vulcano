@@ -42,6 +42,12 @@ const SidebarManager = {
     
     if (isCollapsed && !isMobile) {
       this.sidebar.classList.add('collapsed');
+      document.body.classList.add('sidebar-collapsed');
+      
+      if (this.mainContent) {
+        this.mainContent.classList.add('expanded');
+      }
+      
       this.updateToggleIcon(true);
       this.updateAriaState(false);
     } else {
@@ -90,13 +96,20 @@ const SidebarManager = {
     if (isMobile) {
       // En móvil: mostrar/ocultar con clase active
       this.sidebar.classList.toggle('active');
-      this.mainContent?.classList.toggle('expanded');
       const isOpen = this.sidebar.classList.contains('active');
       this.updateAriaState(isOpen);
       this.updateToggleIcon(false);
     } else {
       // En desktop: colapsar/expandir
       const isCollapsed = this.sidebar.classList.toggle('collapsed');
+      
+      // 🔥 Sincronizar con body y main-content
+      document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+      
+      if (this.mainContent) {
+        this.mainContent.classList.toggle('expanded', isCollapsed);
+      }
+      
       localStorage.setItem(this.storageKey, String(isCollapsed));
       this.updateToggleIcon(isCollapsed);
       this.updateAriaState(!isCollapsed);
@@ -108,7 +121,6 @@ const SidebarManager = {
    */
   closeSidebar() {
     this.sidebar.classList.remove('active');
-    this.mainContent?.classList.remove('expanded');
     this.updateAriaState(false);
   },
   
@@ -123,10 +135,8 @@ const SidebarManager = {
     const isActive = this.sidebar.classList.contains('active');
     
     if (isMobile) {
-      // Móvil: icono hamburguesa o X
       icon.className = isActive ? 'bi bi-x' : 'bi bi-list';
     } else {
-      // Desktop: mantener icono de lista
       icon.className = 'bi bi-list';
     }
   },
@@ -165,15 +175,25 @@ const SidebarManager = {
         const isMobile = window.innerWidth <= 1024;
         
         if (isMobile) {
-          // En móvil: remover collapsed, manejar con active
+          // En móvil: limpiar estados de desktop
           this.sidebar.classList.remove('collapsed');
+          document.body.classList.remove('sidebar-collapsed');
+          
+          if (this.mainContent) {
+            this.mainContent.classList.remove('expanded');
+          }
+          
           if (!this.sidebar.classList.contains('active')) {
             this.updateAriaState(false);
           }
         } else {
-          // En desktop: remover active, cargar estado collapsed
+          // En desktop: limpiar estados de móvil y restaurar
           this.sidebar.classList.remove('active');
-          this.mainContent?.classList.remove('expanded');
+          
+          if (this.mainContent) {
+            this.mainContent.classList.remove('expanded');
+          }
+          
           this.loadState();
         }
         

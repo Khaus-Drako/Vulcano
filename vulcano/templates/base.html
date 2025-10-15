@@ -59,7 +59,7 @@
     <link rel="preload" href="{% static 'css/variables.css' %}" as="style">
     <link rel="preload" href="{% static 'css/base.css' %}" as="style">
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="has-sidebar {% block body_class %}{% endblock %}">
     
     <!-- Navigation Bar (minimalista) -->
     {% block navbar %}
