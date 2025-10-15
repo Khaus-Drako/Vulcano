@@ -29,4 +29,4 @@ services:
       - key: WEB_CONCURRENCY
         value: 2
       - key: CLOUDINARY_URL
-        value: cloudinary://116387575249446:yLl0BoKXUvLJQ__hH1sqoq7yuMs@dmsllccgd
+        value: cloudinary://735883472429354:cJXW83YUit2nluCBi2FIyhSzqbQ@dmsllccgd
