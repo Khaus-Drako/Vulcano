@@ -206,7 +206,6 @@
                             {{ project.short_description|truncatewords:20 }}
                         </p>-->
                     </div>
-                    
                     <div class="project-actions-dash">
                         {% if project.clients.exists %}
                         <div class="dropdown mb-2">
@@ -234,14 +233,14 @@
                         </div>
                         {% endif %}
                         <div class="mb-2">
-                            <span class="badge-vulcano badge-{% if project.status == 'completed' %}success{% elif project.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
-                                {{ project.get_status_display }}
-                            </span>
                             {% if not project.is_published %}
                             <span class="badge-vulcano badge-danger">
                                 <i class="bi bi-eye-slash"></i>
                             </span>
                             {% endif %}
+                            <span class="badge-vulcano badge-{% if project.status == 'completed' %}success{% elif project.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                {{ project.get_status_display }}
+                            </span>
                             {% if project.is_featured %}
                             <span class="badge-vulcano badge-warning">
                                 <i class="bi bi-star-fill"></i> Destacado
