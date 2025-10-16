@@ -405,7 +405,7 @@
   
   /* Stats Grid - Mantener 2 columnas en móvil */
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-sm);
   }
   
@@ -429,7 +429,7 @@
   
   /* Quick Actions - Mantener en 2 columnas */
   .quick-actions {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-sm);
   }
   
