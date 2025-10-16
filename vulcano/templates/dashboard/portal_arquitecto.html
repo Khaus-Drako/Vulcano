@@ -202,9 +202,9 @@
                             </span>
                             {% endif %}
                         </div>
-                        <p class="project-description-dash">
+                        <!--<p class="project-description-dash">
                             {{ project.short_description|truncatewords:20 }}
-                        </p>
+                        </p>-->
                     </div>
                     
                     <div class="project-actions-dash">
@@ -215,7 +215,7 @@
                                     id="clientDropdown{{ project.id }}" 
                                     data-bs-toggle="dropdown" 
                                     aria-expanded="false">
-                                <i class="bi bi-whatsapp me-1"></i>
+                                <i class="bi bi-whatsapp me-1"></i>Contactar
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="clientDropdown{{ project.id }}">
                                 {% for client in project.clients.all %}
